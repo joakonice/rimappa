@@ -1,0 +1,46 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+@layer components {
+  .gradient-primary {
+    @apply bg-gradient-to-br from-[#8B0037] to-[#4B0082];
+  }
+  
+  .gradient-secondary {
+    @apply bg-gradient-to-br from-[#FF4B91] to-[#9C27B0];
+  }
+
+  .card {
+    @apply bg-surface rounded-xl p-4 shadow-lg;
+  }
+
+  .input {
+    @apply bg-surface/50 border border-white/10 rounded-lg px-4 py-2 text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary-500;
+  }
+
+  .button-primary {
+    @apply gradient-primary text-white px-6 py-3 rounded-lg font-medium hover:opacity-90 transition-opacity disabled:opacity-50;
+  }
+
+  .button-secondary {
+    @apply bg-surface text-white px-6 py-3 rounded-lg font-medium border border-white/10 hover:bg-surface/80 transition-colors disabled:opacity-50;
+  }
+} 
