@@ -91,14 +91,12 @@ export default function Competitions() {
   const [viewport, setViewport] = useState({
     latitude: -34.6037,
     longitude: -58.3815,
-    zoom: 12,
-    bearing: 0,
-    pitch: 0
+    zoom: 12
   });
 
-  const handleMapMove = useCallback((evt: { viewState: typeof viewport }) => {
+  const handleMapMove = (evt: any) => {
     setViewport(evt.viewState);
-  }, []);
+  };
 
   const filteredCompetitions = mockCompetitions.filter(competition => {
     if (dateFilter === 'today') {
