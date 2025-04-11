@@ -1,60 +1,70 @@
-import React from 'react';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
-import { prisma } from '@/lib/prisma';
-import CompetitionCard, { CompetitionCardProps } from '@/components/CompetitionCard';
-import Link from 'next/link';
+'use client';
 
-export default async function CompetitionsPage() {
-  const session = await getServerSession(authOptions);
+import { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
+import CompetitionCard from '@/components/CompetitionCard';
 
-  if (!session) {
-    return (
-      <div className="min-h-screen bg-gray-900 text-white p-8">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-3xl font-bold mb-8">Competencias</h1>
-          <p>Debes iniciar sesión para ver las competencias.</p>
-        </div>
-      </div>
-    );
-  }
+interface Competition {
+  id: string;
+  title: string;
+  description: string;
+  date: Date;
+  location: string;
+  maxParticipants: number;
+  currentParticipants: number;
+  status: string;
+  organizer: {
+    id: string;
+    name: string;
+  };
+  participants: {
+    id: string;
+    status: string;
+  }[];
+}
 
-  const competitions = await prisma.competition.findMany({
-    include: {
-      organizer: {
-        select: {
-          id: true,
-          name: true,
+export default function CompetitionsPage() {
+  const { data: session } = useSession();
+  const [competitions, setCompetitions] = useState<Competition[]>([]);
+
+  useEffect(() => {
+    // Aquí iría la llamada a la API para obtener las competencias
+    // Por ahora usamos datos de ejemplo
+    setCompetitions([
+      {
+        id: '1',
+        title: 'Freestyle Master Series Argentina',
+        description: 'La competencia más importante de freestyle rap en Argentina',
+        date: new Date('2024-04-15'),
+        location: 'Teatro Gran Rex, CABA',
+        maxParticipants: 16,
+        currentParticipants: 8,
+        status: 'OPEN',
+        organizer: {
+          name: 'Papo MC',
+          id: '1',
         },
+        participants: []
       },
-      participants: {
-        select: {
-          id: true,
-          status: true,
-        },
-      },
-    },
-  });
+      // ... otros datos de ejemplo
+    ]);
+  }, []);
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white p-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold">Competencias</h1>
-          {session.user.role === 'ORGANIZER' && (
-            <Link
-              href="/competitions/new"
-              className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded"
-            >
-              Crear Competencia
-            </Link>
-          )}
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {competitions.map((competition: CompetitionCardProps['competition']) => (
-            <CompetitionCard key={competition.id} competition={competition} />
-          ))}
-        </div>
+    <div className="container mx-auto px-4 py-8">
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold text-gray-900">Competencias</h1>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {competitions.map((competition) => (
+          <CompetitionCard 
+            key={competition.id} 
+            competition={{
+              ...competition,
+              date: competition.date.toISOString() // Convertimos la fecha a string
+            }} 
+          />
+        ))}
       </div>
     </div>
   );
