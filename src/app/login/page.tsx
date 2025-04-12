@@ -19,7 +19,7 @@ type LoginForm = z.infer<typeof loginSchema>;
 function LoginForm() {
   const [isLoading, setIsLoading] = useState(false);
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get('callbackUrl') || '/dashboard';
+  const callbackUrl = searchParams.get('from') || '/dashboard';
 
   const {
     register,
