@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { signIn, useSession } from 'next-auth/react';
+import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
@@ -18,14 +18,7 @@ type LoginForm = z.infer<typeof loginSchema>;
 
 export default function Login() {
   const router = useRouter();
-  const { data: session, status } = useSession();
   const [isLoading, setIsLoading] = useState(false);
-
-  useEffect(() => {
-    if (session && status === 'authenticated') {
-      router.push('/dashboard');
-    }
-  }, [session, status, router]);
 
   const {
     register,
@@ -50,12 +43,8 @@ export default function Login() {
       }
 
       toast.success('¡Bienvenido!');
-      
-      // Esperamos un momento para que el toast sea visible
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Recargamos la página para asegurar que la sesión se actualice
-      window.location.href = '/dashboard';
+      router.push('/dashboard');
+      router.refresh();
     } catch (error) {
       toast.error('Error al iniciar sesión');
       console.error(error);
