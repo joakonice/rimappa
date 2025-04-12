@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, Suspense } from 'react';
+import { useState, Suspense, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { signIn } from 'next-auth/react';
+import { signIn, useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
@@ -19,6 +19,12 @@ type LoginForm = z.infer<typeof loginSchema>;
 function LoginForm() {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const { data: session, status } = useSession();
+
+  useEffect(() => {
+    console.log('LoginForm - Status:', status);
+    console.log('LoginForm - Session:', session);
+  }, [status, session]);
 
   const {
     register,
@@ -31,24 +37,29 @@ function LoginForm() {
   const onSubmit = async (data: LoginForm) => {
     try {
       setIsLoading(true);
+      console.log('LoginForm - Intentando iniciar sesión con:', data.email);
+      
       const result = await signIn('credentials', {
         email: data.email,
         password: data.password,
         redirect: false,
       });
 
+      console.log('LoginForm - Resultado del login:', result);
+
       if (result?.error) {
+        console.log('LoginForm - Error de login:', result.error);
         toast.error('Credenciales inválidas');
         return;
       }
 
       if (result?.ok) {
+        console.log('LoginForm - Login exitoso, redirigiendo...');
         router.push('/dashboard');
-        router.refresh();
       }
     } catch (error) {
+      console.error('LoginForm - Error durante el login:', error);
       toast.error('Error al iniciar sesión');
-      console.error(error);
     } finally {
       setIsLoading(false);
     }

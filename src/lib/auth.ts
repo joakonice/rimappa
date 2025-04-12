@@ -21,10 +21,10 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Password", type: "password" }
       },
       async authorize(credentials) {
-        console.log('Intentando autorizar con credenciales:', credentials?.email);
+        console.log('Auth - Intentando autorizar con credenciales:', credentials?.email);
         
         if (!credentials?.email || !credentials?.password) {
-          console.log('Credenciales faltantes');
+          console.log('Auth - Credenciales faltantes');
           throw new Error('Email y contraseña son requeridos');
         }
 
@@ -35,7 +35,7 @@ export const authOptions: NextAuthOptions = {
         });
 
         if (!user) {
-          console.log('Usuario no encontrado');
+          console.log('Auth - Usuario no encontrado');
           throw new Error('Usuario no encontrado');
         }
 
@@ -45,11 +45,11 @@ export const authOptions: NextAuthOptions = {
         );
 
         if (!isPasswordValid) {
-          console.log('Contraseña incorrecta');
+          console.log('Auth - Contraseña incorrecta');
           throw new Error('Contraseña incorrecta');
         }
 
-        console.log('Usuario autorizado:', user.email);
+        console.log('Auth - Usuario autorizado:', user.email);
         return {
           id: user.id,
           email: user.email,
@@ -64,8 +64,8 @@ export const authOptions: NextAuthOptions = {
   },
   callbacks: {
     async jwt({ token, user }) {
-      console.log('JWT Callback - Token:', token);
-      console.log('JWT Callback - User:', user);
+      console.log('Auth - JWT Callback - Token:', token);
+      console.log('Auth - JWT Callback - User:', user);
       
       if (user) {
         token.id = user.id;
@@ -74,8 +74,8 @@ export const authOptions: NextAuthOptions = {
       return token;
     },
     async session({ session, token }) {
-      console.log('Session Callback - Session:', session);
-      console.log('Session Callback - Token:', token);
+      console.log('Auth - Session Callback - Session:', session);
+      console.log('Auth - Session Callback - Token:', token);
       
       if (token) {
         session.user.id = token.id as string;
