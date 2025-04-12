@@ -1,13 +1,24 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: 'export',
   images: {
-    domains: ['api.maptiler.com'],
+    unoptimized: true,
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'api.maptiler.com',
+        port: '',
+        pathname: '/maps/**',
+      },
+    ],
   },
   webpack: (config) => {
     config.resolve.fallback = {
       ...config.resolve.fallback,
       fs: false,
-      path: false,
+      net: false,
+      tls: false,
+      dns: false,
     };
     return config;
   },
