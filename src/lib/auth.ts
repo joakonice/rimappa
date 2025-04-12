@@ -68,13 +68,10 @@ export const authOptions: NextAuthOptions = {
       console.log('Auth - JWT Callback - User:', user ? JSON.stringify(user, null, 2) : 'No user');
       
       if (user) {
-        return {
-          ...token,
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: user.role,
-        };
+        token.id = user.id;
+        token.email = user.email;
+        token.name = user.name;
+        token.role = user.role;
       }
       return token;
     },
@@ -82,16 +79,13 @@ export const authOptions: NextAuthOptions = {
       console.log('Auth - Session Callback - Session:', JSON.stringify(session, null, 2));
       console.log('Auth - Session Callback - Token:', JSON.stringify(token, null, 2));
       
-      return {
-        ...session,
-        user: {
-          ...session.user,
-          id: token.id as string,
-          email: token.email as string,
-          name: token.name as string,
-          role: token.role as UserRole,
-        },
-      };
+      if (session?.user) {
+        session.user.id = token.id as string;
+        session.user.email = token.email as string;
+        session.user.name = token.name as string;
+        session.user.role = token.role as UserRole;
+      }
+      return session;
     }
   },
   session: {
@@ -99,5 +93,16 @@ export const authOptions: NextAuthOptions = {
     maxAge: 30 * 24 * 60 * 60, // 30 días
   },
   secret: process.env.NEXTAUTH_SECRET,
-  debug: true
+  debug: true,
+  cookies: {
+    sessionToken: {
+      name: `__Secure-next-auth.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: true
+      }
+    }
+  }
 }; 
