@@ -12,22 +12,19 @@ export const config = {
 export default withAuth(
   function middleware(req) {
     const token = req.nextauth.token;
-    console.log('Middleware - Token:', token);
     
-    // Si hay token, permitir el acceso
-    if (token) {
-      console.log('Middleware - Usuario autenticado, permitiendo acceso');
-      return NextResponse.next();
+    if (!token) {
+      const url = req.nextUrl.clone();
+      url.pathname = '/login';
+      url.searchParams.set('callbackUrl', req.url);
+      return NextResponse.redirect(url);
     }
-
-    // Si no hay token, redirigir al login
-    console.log('Middleware - Usuario no autenticado, redirigiendo a login');
-    const loginUrl = new URL('/login', req.url);
-    return NextResponse.redirect(loginUrl);
+    
+    return NextResponse.next();
   },
   {
     callbacks: {
-      authorized({ token }) {
+      authorized: ({ token }) => {
         return !!token;
       },
     },

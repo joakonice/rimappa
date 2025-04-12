@@ -56,6 +56,7 @@ export const authOptions: NextAuthOptions = {
   ],
   pages: {
     signIn: '/login',
+    error: '/login',
   },
   callbacks: {
     async jwt({ token, user }) {
@@ -75,6 +76,18 @@ export const authOptions: NextAuthOptions = {
         session.user.role = token.role as UserRole;
       }
       return session;
+    },
+    async redirect({ url, baseUrl }) {
+      // Si la URL es relativa, la convertimos a absoluta
+      if (url.startsWith('/')) {
+        return `${baseUrl}${url}`;
+      }
+      // Si la URL ya es absoluta y pertenece al mismo dominio, la permitimos
+      else if (url.startsWith(baseUrl)) {
+        return url;
+      }
+      // Por defecto, redirigimos al dashboard
+      return `${baseUrl}/dashboard`;
     }
   },
   session: {

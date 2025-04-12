@@ -48,20 +48,17 @@ function LoginForm() {
       const result = await signIn('credentials', {
         email: data.email,
         password: data.password,
-        redirect: false,
+        redirect: true,
+        callbackUrl: '/dashboard'
       });
 
+      // El código después de este punto no se ejecutará si la redirección es exitosa
       console.log('LoginForm - Resultado del login:', result);
 
       if (result?.error) {
         console.log('LoginForm - Error de login:', result.error);
         toast.error('Credenciales inválidas');
         return;
-      }
-
-      if (result?.ok) {
-        console.log('LoginForm - Login exitoso, esperando actualización de sesión...');
-        toast.success('Login exitoso');
       }
     } catch (error) {
       console.error('LoginForm - Error durante el login:', error);
