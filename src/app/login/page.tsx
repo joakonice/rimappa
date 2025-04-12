@@ -19,7 +19,7 @@ type LoginForm = z.infer<typeof loginSchema>;
 function LoginForm() {
   const [isLoading, setIsLoading] = useState(false);
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get('from') || '/dashboard';
+  const from = searchParams.get('from') || '/dashboard';
 
   const {
     register,
@@ -44,7 +44,7 @@ function LoginForm() {
       }
 
       if (result?.ok) {
-        window.location.href = callbackUrl;
+        window.location.href = from;
       }
     } catch (error) {
       toast.error('Error al iniciar sesión');

@@ -23,10 +23,7 @@ export default withAuth(
     }
 
     if (!token) {
-      let from = req.nextUrl.pathname;
-      if (req.nextUrl.search) {
-        from += req.nextUrl.search;
-      }
+      const from = req.nextUrl.pathname;
       return NextResponse.redirect(
         new URL(`/login?from=${encodeURIComponent(from)}`, req.url)
       );
