@@ -1,68 +1,59 @@
-'use client';
-
-import { useState, useEffect } from 'react';
-import { useSession } from 'next-auth/react';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
+import { redirect } from 'next/navigation';
+import { prisma } from '@/lib/prisma';
 import CompetitionCard from '@/components/CompetitionCard';
+import { Competition, Participation } from '@prisma/client';
 
-interface Competition {
-  id: string;
-  title: string;
-  description: string;
-  date: Date;
-  location: string;
-  maxParticipants: number;
-  currentParticipants: number;
-  status: string;
+interface CompetitionWithRelations extends Competition {
   organizer: {
     id: string;
     name: string;
   };
-  participants: {
-    id: string;
-    status: string;
-  }[];
+  participants: Participation[];
 }
 
-export default function CompetitionsPage() {
-  const { data: session } = useSession();
-  const [competitions, setCompetitions] = useState<Competition[]>([]);
+export default async function CompetitionsPage() {
+  const session = await getServerSession(authOptions);
 
-  useEffect(() => {
-    // Aquí iría la llamada a la API para obtener las competencias
-    // Por ahora usamos datos de ejemplo
-    setCompetitions([
-      {
-        id: '1',
-        title: 'Freestyle Master Series Argentina',
-        description: 'La competencia más importante de freestyle rap en Argentina',
-        date: new Date('2024-04-15'),
-        location: 'Teatro Gran Rex, CABA',
-        maxParticipants: 16,
-        currentParticipants: 8,
-        status: 'OPEN',
-        organizer: {
-          name: 'Papo MC',
-          id: '1',
-        },
-        participants: []
-      },
-      // ... otros datos de ejemplo
-    ]);
-  }, []);
+  if (!session) {
+    redirect('/login');
+  }
+
+  const competitions = await prisma.competition.findMany({
+    include: {
+      organizer: true,
+      participants: true,
+    },
+  });
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Competencias</h1>
-      </div>
+      <h1 className="text-2xl font-bold text-white mb-6">Competencias</h1>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {competitions.map((competition) => (
-          <CompetitionCard 
-            key={competition.id} 
+        {competitions.map((competition: CompetitionWithRelations) => (
+          <CompetitionCard
+            key={competition.id}
             competition={{
               ...competition,
-              date: competition.date.toISOString() // Convertimos la fecha a string
-            }} 
+              date: competition.date.toISOString(),
+              image: competition.image || '/images/competitions/default.jpg',
+              rating: competition.rating || 4.5,
+              price: competition.price || 'Gratis',
+              details: {
+                schedule: [
+                  { time: '17:00 a 18:00', price: competition.price || 'Gratis' }
+                ],
+                prize: competition.prize || 'A definir',
+                judges: competition.judges || [],
+                hosts: competition.hosts || [],
+                extras: {
+                  filmmaker: competition.filmmaker || '',
+                  music: competition.music || '',
+                  photography: competition.photography || ''
+                }
+              }
+            }}
           />
         ))}
       </div>
