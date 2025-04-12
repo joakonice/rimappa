@@ -32,7 +32,8 @@ export default function Login() {
     try {
       setIsLoading(true);
       const result = await signIn('credentials', {
-        redirect: false,
+        redirect: true,
+        callbackUrl: '/dashboard',
         email: data.email,
         password: data.password,
       });
@@ -41,10 +42,6 @@ export default function Login() {
         toast.error('Credenciales inválidas');
         return;
       }
-
-      toast.success('¡Bienvenido!');
-      router.push('/dashboard');
-      router.refresh();
     } catch (error) {
       toast.error('Error al iniciar sesión');
       console.error(error);
