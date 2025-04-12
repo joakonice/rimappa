@@ -11,6 +11,13 @@ export const config = {
 
 export default withAuth(
   function middleware(req) {
+    const token = req.nextauth.token;
+    
+    // Si no hay token, redirigir al login
+    if (!token) {
+      return NextResponse.redirect(new URL('/login', req.url));
+    }
+
     return NextResponse.next();
   },
   {
@@ -19,6 +26,7 @@ export default withAuth(
     },
     pages: {
       signIn: '/login',
+      error: '/login',
     },
   }
 ); 

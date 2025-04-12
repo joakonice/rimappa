@@ -4,6 +4,14 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "./prisma";
 import { UserRole } from "@prisma/client";
 
+if (!process.env.NEXTAUTH_SECRET) {
+  throw new Error('NEXTAUTH_SECRET no está configurado');
+}
+
+if (!process.env.NEXTAUTH_URL) {
+  throw new Error('NEXTAUTH_URL no está configurado');
+}
+
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
@@ -14,7 +22,7 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
-          return null;
+          throw new Error('Email y contraseña son requeridos');
         }
 
         const user = await prisma.user.findUnique({
@@ -24,7 +32,7 @@ export const authOptions: NextAuthOptions = {
         });
 
         if (!user) {
-          return null;
+          throw new Error('Usuario no encontrado');
         }
 
         const isPasswordValid = await compare(
@@ -33,7 +41,7 @@ export const authOptions: NextAuthOptions = {
         );
 
         if (!isPasswordValid) {
-          return null;
+          throw new Error('Contraseña incorrecta');
         }
 
         return {
@@ -47,27 +55,22 @@ export const authOptions: NextAuthOptions = {
   ],
   pages: {
     signIn: '/login',
+    error: '/login',
   },
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, account }) {
       if (user) {
-        return {
-          ...token,
-          id: user.id,
-          role: user.role,
-        };
+        token.id = user.id;
+        token.role = user.role;
       }
       return token;
     },
     async session({ session, token }) {
-      return {
-        ...session,
-        user: {
-          ...session.user,
-          id: token.id,
-          role: token.role,
-        },
-      };
+      if (token) {
+        session.user.id = token.id as string;
+        session.user.role = token.role as UserRole;
+      }
+      return session;
     }
   },
   session: {

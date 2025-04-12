@@ -33,8 +33,7 @@ function LoginForm() {
     try {
       setIsLoading(true);
       const result = await signIn('credentials', {
-        redirect: true,
-        callbackUrl,
+        redirect: false,
         email: data.email,
         password: data.password,
       });
@@ -42,6 +41,10 @@ function LoginForm() {
       if (result?.error) {
         toast.error('Credenciales inválidas');
         return;
+      }
+
+      if (result?.ok) {
+        window.location.href = callbackUrl;
       }
     } catch (error) {
       toast.error('Error al iniciar sesión');
