@@ -5,6 +5,7 @@ import Link from 'next/link';
 import DashboardStats from '@/components/DashboardStats';
 import RecentActivity from '@/components/RecentActivity';
 import { redirect } from 'next/navigation';
+import CompetitionCard from '@/components/CompetitionCard';
 
 export default async function Dashboard() {
   const session = await getServerSession(authOptions);
@@ -123,6 +124,42 @@ export default async function Dashboard() {
     take: 5,
   });
 
+  // Datos de ejemplo basados en la competencia de freestyle
+  const competitions = [
+    {
+      id: '1',
+      title: 'DINASTIA FREESTYLE',
+      description: 'DOS VS DOS - Fecha #4 del Torneo 10',
+      image: '/images/competitions/dinastia-freestyle.jpg',
+      date: '2024-05-01', // Jueves 1 de Mayo
+      location: 'Plaza San Martin, Morón',
+      maxParticipants: 32,
+      currentParticipants: 0,
+      status: 'OPEN',
+      organizer: {
+        id: '1',
+        name: 'Torneo 10'
+      },
+      participants: [],
+      rating: 4.8,
+      price: '2.500',
+      details: {
+        schedule: [
+          { time: '17:00 a 18:00', price: '2.500$ x Team' },
+          { time: '18:00 a 18:45', price: '3.000$ x Team' }
+        ],
+        prize: '80.000$ + SPONSORT',
+        judges: ['KIRO', 'DOSSANTOS', 'CLAP'],
+        hosts: ['NICOLAAS KTRES', 'NERY LUIAN'],
+        extras: {
+          filmmaker: 'GABILONG 7',
+          music: 'OMNI WEST SIDE',
+          photography: 'UCZCLAIM'
+        }
+      }
+    }
+  ];
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8">
@@ -165,6 +202,40 @@ export default async function Dashboard() {
         </div>
 
         <RecentActivity activities={recentActivities} />
+      </div>
+
+      <div className="p-4 space-y-6">
+        {/* Today's Competitions */}
+        <section>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-bold text-white">Competencias de hoy</h2>
+            <button className="text-purple-400 text-sm">Ver todas</button>
+          </div>
+          <div className="grid grid-cols-1 gap-4">
+            {competitions.slice(0, 1).map((competition) => (
+              <CompetitionCard 
+                key={competition.id} 
+                competition={competition}
+              />
+            ))}
+          </div>
+        </section>
+
+        {/* This Week's Competitions */}
+        <section>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-bold text-white">Esta semana</h2>
+            <button className="text-purple-400 text-sm">Ver todas</button>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {competitions.slice(1).map((competition) => (
+              <CompetitionCard 
+                key={competition.id} 
+                competition={competition}
+              />
+            ))}
+          </div>
+        </section>
       </div>
     </div>
   );
