@@ -43,8 +43,12 @@ export default function Login() {
       }
 
       toast.success('¡Bienvenido!');
-      router.push('/dashboard');
-      router.refresh();
+      
+      // Esperamos un momento para que el toast sea visible
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Forzamos una actualización completa para asegurar que la sesión se cargue
+      window.location.href = '/dashboard';
     } catch (error) {
       toast.error('Error al iniciar sesión');
       console.error(error);
