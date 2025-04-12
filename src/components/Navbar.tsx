@@ -1,71 +1,151 @@
 'use client';
 
-import React from 'react';
+import { Fragment } from 'react';
+import { Disclosure, Menu, Transition } from '@headlessui/react';
+import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline';
+import { useSession, signOut } from 'next-auth/react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Menu, Search, MapPin, User } from 'lucide-react';
+
+const navigation = [
+  { name: 'Dashboard', href: '/dashboard' },
+  { name: 'Competencias', href: '/dashboard/competitions' },
+];
+
+function classNames(...classes: string[]) {
+  return classes.filter(Boolean).join(' ');
+}
 
 export default function Navbar() {
+  const { data: session } = useSession();
   const pathname = usePathname();
-  const isHome = pathname === '/';
 
   return (
-    <>
-      {/* Top Navbar */}
-      <nav className="fixed top-0 left-0 right-0 z-50 gradient-primary">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <button className="lg:hidden text-white">
-              <Menu size={24} />
-            </button>
-            <Link href="/" className="text-2xl font-bold text-white">
-              Rimappa
-            </Link>
+    <Disclosure as="nav" className="bg-gray-800">
+      {({ open }) => (
+        <>
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="flex h-16 items-center justify-between">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <Link href="/" className="text-2xl font-bold text-white">
+                    Rimappa
+                  </Link>
+                </div>
+                <div className="hidden md:block">
+                  <div className="ml-10 flex items-baseline space-x-4">
+                    {navigation.map((item) => (
+                      <Link
+                        key={item.name}
+                        href={item.href}
+                        className={classNames(
+                          pathname === item.href
+                            ? 'bg-gray-900 text-white'
+                            : 'text-gray-300 hover:bg-gray-700 hover:text-white',
+                          'rounded-md px-3 py-2 text-sm font-medium'
+                        )}
+                      >
+                        {item.name}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <div className="hidden md:block">
+                <div className="ml-4 flex items-center md:ml-6">
+                  <Menu as="div" className="relative ml-3">
+                    <div>
+                      <Menu.Button className="flex max-w-xs items-center rounded-full bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800">
+                        <span className="sr-only">Abrir menú de usuario</span>
+                        <div className="h-8 w-8 rounded-full bg-purple-600 flex items-center justify-center text-white">
+                          {session?.user?.name?.[0] || 'U'}
+                        </div>
+                      </Menu.Button>
+                    </div>
+                    <Transition
+                      as={Fragment}
+                      enter="transition ease-out duration-100"
+                      enterFrom="transform opacity-0 scale-95"
+                      enterTo="transform opacity-100 scale-100"
+                      leave="transition ease-in duration-75"
+                      leaveFrom="transform opacity-100 scale-100"
+                      leaveTo="transform opacity-0 scale-95"
+                    >
+                      <Menu.Items className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-gray-800 py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                        <Menu.Item>
+                          {({ active }) => (
+                            <button
+                              onClick={() => signOut()}
+                              className={classNames(
+                                active ? 'bg-gray-700' : '',
+                                'block w-full px-4 py-2 text-sm text-gray-300 text-left'
+                              )}
+                            >
+                              Cerrar sesión
+                            </button>
+                          )}
+                        </Menu.Item>
+                      </Menu.Items>
+                    </Transition>
+                  </Menu>
+                </div>
+              </div>
+              <div className="-mr-2 flex md:hidden">
+                <Disclosure.Button className="inline-flex items-center justify-center rounded-md bg-gray-800 p-2 text-gray-400 hover:bg-gray-700 hover:text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800">
+                  <span className="sr-only">Abrir menú principal</span>
+                  {open ? (
+                    <XMarkIcon className="block h-6 w-6" aria-hidden="true" />
+                  ) : (
+                    <Bars3Icon className="block h-6 w-6" aria-hidden="true" />
+                  )}
+                </Disclosure.Button>
+              </div>
+            </div>
           </div>
-          
-          <div className="flex items-center gap-4">
-            <button className="text-white">
-              <Search size={24} />
-            </button>
-            <button className="text-white">
-              <MapPin size={24} />
-            </button>
-          </div>
-        </div>
-      </nav>
 
-      {/* Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-surface border-t border-white/10">
-        <div className="container mx-auto px-4">
-          <div className="flex justify-around py-3">
-            <Link href="/" className={`flex flex-col items-center ${isHome ? 'text-primary-400' : 'text-text-secondary'}`}>
-              <Search size={24} />
-              <span className="text-xs mt-1">Explorar</span>
-            </Link>
-            <Link href="/favorites" className="flex flex-col items-center text-text-secondary">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
-              </svg>
-              <span className="text-xs mt-1">Favoritos</span>
-            </Link>
-            <Link href="/messages" className="flex flex-col items-center text-text-secondary">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-              </svg>
-              <span className="text-xs mt-1">Mensajes</span>
-            </Link>
-            <Link href="/profile" className="flex flex-col items-center text-text-secondary">
-              <User size={24} />
-              <span className="text-xs mt-1">Perfil</span>
-            </Link>
-          </div>
-        </div>
-      </div>
-
-      {/* Content Padding */}
-      <div className="pt-16 pb-20">
-        {/* Este div asegura que el contenido no quede detrás del navbar o la navegación inferior */}
-      </div>
-    </>
+          <Disclosure.Panel className="md:hidden">
+            <div className="space-y-1 px-2 pb-3 pt-2 sm:px-3">
+              {navigation.map((item) => (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  className={classNames(
+                    pathname === item.href
+                      ? 'bg-gray-900 text-white'
+                      : 'text-gray-300 hover:bg-gray-700 hover:text-white',
+                    'block rounded-md px-3 py-2 text-base font-medium'
+                  )}
+                >
+                  {item.name}
+                </Link>
+              ))}
+            </div>
+            <div className="border-t border-gray-700 pb-3 pt-4">
+              <div className="flex items-center px-5">
+                <div className="h-8 w-8 rounded-full bg-purple-600 flex items-center justify-center text-white">
+                  {session?.user?.name?.[0] || 'U'}
+                </div>
+                <div className="ml-3">
+                  <div className="text-base font-medium leading-none text-white">
+                    {session?.user?.name}
+                  </div>
+                  <div className="text-sm font-medium leading-none text-gray-400">
+                    {session?.user?.email}
+                  </div>
+                </div>
+              </div>
+              <div className="mt-3 space-y-1 px-2">
+                <button
+                  onClick={() => signOut()}
+                  className="block w-full rounded-md px-3 py-2 text-base font-medium text-gray-400 hover:bg-gray-700 hover:text-white"
+                >
+                  Cerrar sesión
+                </button>
+              </div>
+            </div>
+          </Disclosure.Panel>
+        </>
+      )}
+    </Disclosure>
   );
 } 
