@@ -1,5 +1,4 @@
 import { NextAuthOptions } from "next-auth";
-import { compare } from "bcrypt";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "./prisma";
 import { UserRole } from "@prisma/client";
@@ -21,10 +20,7 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Password", type: "password" }
       },
       async authorize(credentials) {
-        console.log('Auth - Intentando autorizar con credenciales:', credentials?.email);
-        
         if (!credentials?.email || !credentials?.password) {
-          console.log('Auth - Credenciales faltantes');
           throw new Error('Email y contraseña son requeridos');
         }
 
@@ -35,21 +31,20 @@ export const authOptions: NextAuthOptions = {
         });
 
         if (!user) {
-          console.log('Auth - Usuario no encontrado');
           throw new Error('Usuario no encontrado');
         }
 
-        const isPasswordValid = await compare(
+        // Importar bcrypt dinámicamente solo cuando se necesite
+        const bcrypt = await import('bcrypt');
+        const isPasswordValid = await bcrypt.compare(
           credentials.password,
           user.password
         );
 
         if (!isPasswordValid) {
-          console.log('Auth - Contraseña incorrecta');
           throw new Error('Contraseña incorrecta');
         }
 
-        console.log('Auth - Usuario autorizado:', user.email);
         return {
           id: user.id,
           email: user.email,
@@ -64,9 +59,6 @@ export const authOptions: NextAuthOptions = {
   },
   callbacks: {
     async jwt({ token, user }) {
-      console.log('Auth - JWT Callback - Token:', JSON.stringify(token, null, 2));
-      console.log('Auth - JWT Callback - User:', user ? JSON.stringify(user, null, 2) : 'No user');
-      
       if (user) {
         token.id = user.id;
         token.email = user.email;
@@ -76,9 +68,6 @@ export const authOptions: NextAuthOptions = {
       return token;
     },
     async session({ session, token }) {
-      console.log('Auth - Session Callback - Session:', JSON.stringify(session, null, 2));
-      console.log('Auth - Session Callback - Token:', JSON.stringify(token, null, 2));
-      
       if (session?.user) {
         session.user.id = token.id as string;
         session.user.email = token.email as string;
