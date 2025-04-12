@@ -8,8 +8,10 @@ import { redirect } from 'next/navigation';
 
 export default async function Dashboard() {
   const session = await getServerSession(authOptions);
-  
-  if (!session) {
+  console.log('Dashboard - Session:', session);
+
+  if (!session?.user) {
+    console.log('Dashboard - No session found, redirecting to login');
     redirect('/login');
   }
 

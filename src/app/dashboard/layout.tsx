@@ -7,6 +7,9 @@ import { useSession, signOut } from 'next-auth/react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
+import { redirect } from 'next/navigation';
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard' },
@@ -18,30 +21,23 @@ function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(' ');
 }
 
-export default function DashboardLayout({
+export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const { data: session, status } = useSession();
-  const pathname = usePathname();
-  const router = useRouter();
+  const session = await getServerSession(authOptions);
 
-  useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.replace('/login');
-    }
-  }, [status, router]);
-
-  if (status === 'loading') {
-    return <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-      <div className="text-white">Cargando...</div>
-    </div>;
+  if (!session?.user) {
+    console.log('DashboardLayout - No session found, redirecting to login');
+    redirect('/login');
   }
 
-  if (!session) {
-    return null;
-  }
+  console.log('DashboardLayout - Session found:', {
+    id: session.user.id,
+    email: session.user.email,
+    role: session.user.role
+  });
 
   return (
     <div className="min-h-screen bg-gray-900">
