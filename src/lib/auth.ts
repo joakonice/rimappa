@@ -64,24 +64,34 @@ export const authOptions: NextAuthOptions = {
   },
   callbacks: {
     async jwt({ token, user }) {
-      console.log('Auth - JWT Callback - Token:', token);
-      console.log('Auth - JWT Callback - User:', user);
+      console.log('Auth - JWT Callback - Token:', JSON.stringify(token, null, 2));
+      console.log('Auth - JWT Callback - User:', user ? JSON.stringify(user, null, 2) : 'No user');
       
       if (user) {
-        token.id = user.id;
-        token.role = user.role;
+        return {
+          ...token,
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          role: user.role,
+        };
       }
       return token;
     },
     async session({ session, token }) {
-      console.log('Auth - Session Callback - Session:', session);
-      console.log('Auth - Session Callback - Token:', token);
+      console.log('Auth - Session Callback - Session:', JSON.stringify(session, null, 2));
+      console.log('Auth - Session Callback - Token:', JSON.stringify(token, null, 2));
       
-      if (token) {
-        session.user.id = token.id as string;
-        session.user.role = token.role as UserRole;
-      }
-      return session;
+      return {
+        ...session,
+        user: {
+          ...session.user,
+          id: token.id as string,
+          email: token.email as string,
+          name: token.name as string,
+          role: token.role as UserRole,
+        },
+      };
     }
   },
   session: {

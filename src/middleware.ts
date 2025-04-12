@@ -9,23 +9,34 @@ export const config = {
   ]
 };
 
-export default withAuth({
-  callbacks: {
-    authorized: ({ token, req }) => {
-      // Los logs del middleware aparecerán en los logs del servidor
-      console.log('Middleware - Token:', token);
-      console.log('Middleware - URL:', req.url);
-      
-      if (!token) {
-        console.log('Middleware - No hay token, redirigiendo a login');
-        return false;
-      }
-      
-      console.log('Middleware - Token válido, permitiendo acceso');
-      return true;
-    }
+export default withAuth(
+  function middleware(req) {
+    console.log('Middleware - Request path:', req.nextUrl.pathname);
+    return NextResponse.next();
   },
-  pages: {
-    signIn: '/login',
+  {
+    callbacks: {
+      authorized: ({ token, req }) => {
+        console.log('Middleware - Token:', JSON.stringify(token, null, 2));
+        console.log('Middleware - URL:', req.url);
+        
+        if (!token) {
+          console.log('Middleware - No hay token, redirigiendo a login');
+          return false;
+        }
+        
+        // Verificar que el token tenga la información necesaria
+        if (!token.email || !token.id) {
+          console.log('Middleware - Token inválido, redirigiendo a login');
+          return false;
+        }
+        
+        console.log('Middleware - Token válido, permitiendo acceso');
+        return true;
+      }
+    },
+    pages: {
+      signIn: '/login',
+    }
   }
-}); 
+); 
