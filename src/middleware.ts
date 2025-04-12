@@ -11,7 +11,18 @@ export const config = {
 
 export default withAuth({
   callbacks: {
-    authorized: ({ token }) => !!token
+    authorized: ({ token, req }) => {
+      console.log('Middleware - Token:', token);
+      console.log('Middleware - URL:', req.url);
+      
+      if (!token) {
+        console.log('No hay token, redirigiendo a login');
+        return false;
+      }
+      
+      console.log('Token válido, permitiendo acceso');
+      return true;
+    }
   },
   pages: {
     signIn: '/login',

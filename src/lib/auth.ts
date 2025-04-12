@@ -21,7 +21,10 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Password", type: "password" }
       },
       async authorize(credentials) {
+        console.log('Intentando autorizar con credenciales:', credentials?.email);
+        
         if (!credentials?.email || !credentials?.password) {
+          console.log('Credenciales faltantes');
           throw new Error('Email y contraseña son requeridos');
         }
 
@@ -32,6 +35,7 @@ export const authOptions: NextAuthOptions = {
         });
 
         if (!user) {
+          console.log('Usuario no encontrado');
           throw new Error('Usuario no encontrado');
         }
 
@@ -41,9 +45,11 @@ export const authOptions: NextAuthOptions = {
         );
 
         if (!isPasswordValid) {
+          console.log('Contraseña incorrecta');
           throw new Error('Contraseña incorrecta');
         }
 
+        console.log('Usuario autorizado:', user.email);
         return {
           id: user.id,
           email: user.email,
@@ -58,6 +64,9 @@ export const authOptions: NextAuthOptions = {
   },
   callbacks: {
     async jwt({ token, user }) {
+      console.log('JWT Callback - Token:', token);
+      console.log('JWT Callback - User:', user);
+      
       if (user) {
         token.id = user.id;
         token.role = user.role;
@@ -65,6 +74,9 @@ export const authOptions: NextAuthOptions = {
       return token;
     },
     async session({ session, token }) {
+      console.log('Session Callback - Session:', session);
+      console.log('Session Callback - Token:', token);
+      
       if (token) {
         session.user.id = token.id as string;
         session.user.role = token.role as UserRole;
@@ -77,5 +89,5 @@ export const authOptions: NextAuthOptions = {
     maxAge: 30 * 24 * 60 * 60, // 30 días
   },
   secret: process.env.NEXTAUTH_SECRET,
-  debug: process.env.NODE_ENV === 'development'
+  debug: true
 }; 
