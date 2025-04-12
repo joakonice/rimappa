@@ -36,13 +36,17 @@ model User {
 
 model Competition {
   id                  String   @id @default(cuid())
+  displayName         String
+  keyName            String   @unique
   title              String
   description        String
   date               DateTime
+  createdAt          DateTime @default(now())
   location           String
   maxParticipants    Int
   currentParticipants Int      @default(0)
   status             String    @default("OPEN")
+  modality           CompetitionModality
   image              String?
   rating             Float?    @default(4.5)
   price              String?
@@ -52,7 +56,6 @@ model Competition {
   filmmaker          String?
   music              String?
   photography        String?
-  createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
   
   // Relationships
@@ -63,6 +66,7 @@ model Competition {
   activities        Activity[]
 
   @@index([organizerId])
+  @@index([keyName])
 }
 
 model Participation {
@@ -178,4 +182,14 @@ enum Role {
   ADMIN
   ORGANIZER
   COMPETITOR
+}
+
+enum CompetitionModality {
+  ONE_VS_ONE
+  TWO_VS_TWO
+  THREE_VS_THREE
+  FOUR_VS_FOUR
+  MULTIVERSE
+  SURVIVAL
+  CUSTOM
 } 
