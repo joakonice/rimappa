@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, Suspense, useEffect } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { signIn, useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
+import { signIn } from 'next-auth/react';
+import { useSearchParams } from 'next/navigation';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
 
@@ -16,21 +16,10 @@ const loginSchema = z.object({
 
 type LoginForm = z.infer<typeof loginSchema>;
 
-function LoginForm() {
+export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
-  const { data: session, status } = useSession();
-
-  useEffect(() => {
-    console.log('LoginForm - Status:', status);
-    console.log('LoginForm - Session:', session);
-    
-    if (status === 'authenticated' && session) {
-      console.log('LoginForm - Usuario autenticado, redirigiendo a dashboard...');
-      router.push('/dashboard');
-      router.refresh();
-    }
-  }, [status, session, router]);
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams?.get('callbackUrl') || '/dashboard';
 
   const {
     register,
@@ -43,25 +32,19 @@ function LoginForm() {
   const onSubmit = async (data: LoginForm) => {
     try {
       setIsLoading(true);
-      console.log('LoginForm - Intentando iniciar sesión con:', data.email);
       
       const result = await signIn('credentials', {
         email: data.email,
         password: data.password,
+        callbackUrl,
         redirect: true,
-        callbackUrl: '/dashboard'
       });
 
-      // El código después de este punto no se ejecutará si la redirección es exitosa
-      console.log('LoginForm - Resultado del login:', result);
-
+      // Este código solo se ejecutará si hay un error, ya que redirect: true
       if (result?.error) {
-        console.log('LoginForm - Error de login:', result.error);
         toast.error('Credenciales inválidas');
-        return;
       }
     } catch (error) {
-      console.error('LoginForm - Error durante el login:', error);
       toast.error('Error al iniciar sesión');
     } finally {
       setIsLoading(false);
@@ -139,17 +122,5 @@ function LoginForm() {
         </div>
       </div>
     </div>
-  );
-}
-
-export default function Login() {
-  return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <div className="text-white">Cargando...</div>
-      </div>
-    }>
-      <LoginForm />
-    </Suspense>
   );
 } 
