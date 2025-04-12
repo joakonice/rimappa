@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { signIn } from 'next-auth/react';
-import { useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
 
@@ -18,8 +18,7 @@ type LoginForm = z.infer<typeof loginSchema>;
 
 function LoginForm() {
   const [isLoading, setIsLoading] = useState(false);
-  const searchParams = useSearchParams();
-  const from = searchParams.get('from') || '/dashboard';
+  const router = useRouter();
 
   const {
     register,
@@ -33,9 +32,9 @@ function LoginForm() {
     try {
       setIsLoading(true);
       const result = await signIn('credentials', {
-        redirect: false,
         email: data.email,
         password: data.password,
+        redirect: false,
       });
 
       if (result?.error) {
@@ -44,7 +43,8 @@ function LoginForm() {
       }
 
       if (result?.ok) {
-        window.location.href = from;
+        router.push('/dashboard');
+        router.refresh();
       }
     } catch (error) {
       toast.error('Error al iniciar sesión');

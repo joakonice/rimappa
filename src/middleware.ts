@@ -9,35 +9,11 @@ export const config = {
   ]
 };
 
-export default withAuth(
-  function middleware(req) {
-    const token = req.nextauth.token;
-    const isAuthPage = req.nextUrl.pathname.startsWith('/login') || 
-                      req.nextUrl.pathname.startsWith('/register');
-    
-    if (isAuthPage) {
-      if (token) {
-        return NextResponse.redirect(new URL('/dashboard', req.url));
-      }
-      return NextResponse.next();
-    }
-
-    if (!token) {
-      const from = req.nextUrl.pathname;
-      return NextResponse.redirect(
-        new URL(`/login?from=${encodeURIComponent(from)}`, req.url)
-      );
-    }
-
-    return NextResponse.next();
+export default withAuth({
+  callbacks: {
+    authorized: ({ token }) => !!token
   },
-  {
-    callbacks: {
-      authorized: ({ token }) => !!token
-    },
-    pages: {
-      signIn: '/login',
-      error: '/login',
-    },
+  pages: {
+    signIn: '/login',
   }
-); 
+}); 
