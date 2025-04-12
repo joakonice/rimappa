@@ -24,7 +24,13 @@ function LoginForm() {
   useEffect(() => {
     console.log('LoginForm - Status:', status);
     console.log('LoginForm - Session:', session);
-  }, [status, session]);
+    
+    if (status === 'authenticated' && session) {
+      console.log('LoginForm - Usuario autenticado, redirigiendo a dashboard...');
+      router.push('/dashboard');
+      router.refresh();
+    }
+  }, [status, session, router]);
 
   const {
     register,
@@ -54,8 +60,8 @@ function LoginForm() {
       }
 
       if (result?.ok) {
-        console.log('LoginForm - Login exitoso, redirigiendo...');
-        router.push('/dashboard');
+        console.log('LoginForm - Login exitoso, esperando actualización de sesión...');
+        toast.success('Login exitoso');
       }
     } catch (error) {
       console.error('LoginForm - Error durante el login:', error);
