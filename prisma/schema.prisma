@@ -54,27 +54,17 @@ model User {
 
 model Competition {
   id                  String             @id @default(cuid())
-  displayName         String
-  keyName            String             @unique
   title              String
   description        String
   date               DateTime
   location           String
-  latitude           Float?
-  longitude          Float?
   maxParticipants    Int
   currentParticipants Int               @default(0)
   status             CompetitionStatus  @default(OPEN)
-  modality           CompetitionModality
   image              String?
   rating             Float?             @default(4.5)
   price              String?
   prize              String?
-  judges             String[]           @default([])
-  hosts              String[]           @default([])
-  filmmaker          String?
-  music              String?
-  photography        String?
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
 
@@ -86,7 +76,6 @@ model Competition {
   activities        Activity[]
 
   @@index([organizerId])
-  @@index([keyName])
 }
 
 model Participation {
