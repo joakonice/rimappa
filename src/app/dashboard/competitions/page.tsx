@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, Suspense } from 'react';
+import { useState, useEffect, useCallback, Suspense, useMemo } from 'react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import Map, { Marker, NavigationControl, Popup } from '@vis.gl/react-maplibre';
@@ -29,8 +29,8 @@ interface Competition {
   rating: string;
 }
 
-// Datos de ejemplo - Reemplazar con datos reales de la API
-const mockCompetitions: Competition[] = [
+// Mover los datos mock fuera del componente
+const MOCK_COMPETITIONS: Competition[] = [
   {
     id: '1',
     title: 'Freestyle Master Series Argentina',
@@ -90,8 +90,9 @@ const mockCompetitions: Competition[] = [
 export default function CompetitionsPage() {
   const { data: session } = useSession();
   const isOrganizer = session?.user?.role === 'ORGANIZER';
-  const [competitions, setCompetitions] = useState<Competition[]>(mockCompetitions);
-  const [showFilters, setShowFilters] = useState(false);
+  
+  // Estados principales
+  const [competitions, setCompetitions] = useState<Competition[]>([]);
   const [selectedCompetition, setSelectedCompetition] = useState<Competition | null>(null);
   
   // Estados para filtros
@@ -100,7 +101,7 @@ export default function CompetitionsPage() {
   const [sortBy, setSortBy] = useState<'distance' | 'popularity' | 'date' | 'name'>('date');
   const [searchQuery, setSearchQuery] = useState('');
   const [useSearchRadius, setUseSearchRadius] = useState(false);
-  const [searchRadius, setSearchRadius] = useState(5000); // metros
+  const [searchRadius, setSearchRadius] = useState(5000);
 
   const [viewport, setViewport] = useState({
     latitude: -34.6037,
@@ -108,11 +109,9 @@ export default function CompetitionsPage() {
     zoom: 12
   });
 
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
+  // Cargar datos iniciales
   useEffect(() => {
-    const fetchCompetitions = async () => {
+    const loadCompetitions = async () => {
       try {
         const response = await fetch('/api/competitions');
         if (!response.ok) {
@@ -120,99 +119,82 @@ export default function CompetitionsPage() {
         }
         const data = await response.json();
         setCompetitions(data);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Error desconocido');
-        // Mientras tanto, usar datos mock
-        setCompetitions(mockCompetitions);
-      } finally {
-        setLoading(false);
+      } catch (error) {
+        console.log('Usando datos mock debido a error:', error);
+        setCompetitions(MOCK_COMPETITIONS);
       }
     };
 
-    fetchCompetitions();
+    loadCompetitions();
   }, []);
 
-  // Filtrar competencias basado en los filtros activos
-  const filteredCompetitions = competitions.filter(competition => {
-    console.log('Evaluando competencia:', competition.title);
+  // Filtrar competencias
+  const filteredCompetitions = useMemo(() => {
+    console.log('Filtrando competencias:', competitions.length);
     
-    // Filtro por búsqueda
-    if (searchQuery && !competition.title.toLowerCase().includes(searchQuery.toLowerCase())) {
-      console.log('Filtrado por búsqueda');
-      return false;
-    }
-
-    // Filtro por fecha
-    if (dateFilter !== 'all') {
-      const today = new Date();
-      const competitionDate = new Date(competition.date);
-      console.log('Fecha competencia:', competitionDate, 'Filtro:', dateFilter);
-      
-      switch (dateFilter) {
-        case 'today':
-          if (competitionDate.toDateString() !== today.toDateString()) {
-            console.log('Filtrado por fecha - hoy');
-            return false;
-          }
-          break;
-        case 'week':
-          const weekFromNow = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
-          if (competitionDate > weekFromNow || competitionDate < today) {
-            console.log('Filtrado por fecha - semana');
-            return false;
-          }
-          break;
-        case 'month':
-          const monthFromNow = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
-          if (competitionDate > monthFromNow || competitionDate < today) {
-            console.log('Filtrado por fecha - mes');
-            return false;
-          }
-          break;
+    return competitions.filter(competition => {
+      // Búsqueda por texto
+      if (searchQuery) {
+        const searchLower = searchQuery.toLowerCase();
+        const titleMatch = competition.title.toLowerCase().includes(searchLower);
+        if (!titleMatch) return false;
       }
-    }
 
-    // Filtro por tipo
-    if (typeFilter !== 'all') {
-      const modalityLower = competition.modality.toLowerCase();
-      console.log('Modalidad:', modalityLower, 'Filtro:', typeFilter);
-      if (!modalityLower.includes(typeFilter)) {
-        console.log('Filtrado por tipo');
-        return false;
+      // Filtro por tipo
+      if (typeFilter !== 'all') {
+        const modalityLower = competition.modality.toLowerCase();
+        if (!modalityLower.includes(typeFilter)) return false;
       }
-    }
 
-    // Filtro por radio de búsqueda (solo si está activado)
-    if (useSearchRadius) {
-      // Por ahora retornamos true ya que necesitaríamos la ubicación del usuario
-      // para calcular la distancia real
-      console.log('Radio de búsqueda activado pero no implementado');
-    }
+      // Filtro por fecha
+      if (dateFilter !== 'all') {
+        const today = new Date();
+        const competitionDate = new Date(competition.date);
+        
+        switch (dateFilter) {
+          case 'today':
+            if (competitionDate.toDateString() !== today.toDateString()) return false;
+            break;
+          case 'week':
+            const weekFromNow = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
+            if (competitionDate > weekFromNow || competitionDate < today) return false;
+            break;
+          case 'month':
+            const monthFromNow = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
+            if (competitionDate > monthFromNow || competitionDate < today) return false;
+            break;
+        }
+      }
 
-    console.log('Competencia aceptada:', competition.title);
-    return true;
-  }).sort((a, b) => {
-    // Ordenar según criterio seleccionado
-    switch (sortBy) {
-      case 'date':
-        return new Date(a.date).getTime() - new Date(b.date).getTime();
-      case 'name':
-        return a.title.localeCompare(b.title);
-      case 'popularity':
-        return b.currentParticipants - a.currentParticipants;
-      case 'distance':
-        // Por ahora, si es por distancia, ordenamos por fecha como fallback
-        return new Date(a.date).getTime() - new Date(b.date).getTime();
-      default:
-        return 0;
-    }
-  });
+      return true;
+    }).sort((a, b) => {
+      switch (sortBy) {
+        case 'date':
+          return new Date(a.date).getTime() - new Date(b.date).getTime();
+        case 'name':
+          return a.title.localeCompare(b.title);
+        case 'popularity':
+          return b.currentParticipants - a.currentParticipants;
+        default:
+          return 0;
+      }
+    });
+  }, [competitions, searchQuery, typeFilter, dateFilter, sortBy]);
 
-  // Agregar console.log para debugging
+  // Debugging
   useEffect(() => {
-    console.log('Competitions:', competitions);
-    console.log('Filtered Competitions:', filteredCompetitions);
-    console.log('Current filters:', { dateFilter, typeFilter, sortBy, useSearchRadius, searchRadius, searchQuery });
+    console.log('Estado actual:', {
+      competitionsCount: competitions.length,
+      filteredCount: filteredCompetitions.length,
+      filters: {
+        dateFilter,
+        typeFilter,
+        sortBy,
+        useSearchRadius,
+        searchRadius,
+        searchQuery
+      }
+    });
   }, [competitions, filteredCompetitions, dateFilter, typeFilter, sortBy, useSearchRadius, searchRadius, searchQuery]);
 
   return (
