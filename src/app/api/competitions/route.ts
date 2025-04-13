@@ -62,12 +62,18 @@ export async function POST(request: Request) {
 
 export async function GET() {
   try {
+    console.log('Fetching competitions from CSV...');
     const competitions = await readCompetitionsFromCSV();
+    console.log(`Found ${competitions.length} competitions in CSV`);
     
     // Transform the data to include coordinates
+    console.log('Adding coordinates to competitions...');
     const competitionsWithCoordinates = await Promise.all(
       competitions.map(async (competition) => {
+        console.log(`Getting coordinates for location: ${competition.location}`);
         const coordinates = await getCoordinates(competition.location);
+        console.log(`Coordinates for ${competition.location}:`, coordinates);
+        
         return {
           ...competition,
           id: competition.title.toLowerCase().replace(/\s+/g, '-'),
@@ -77,6 +83,7 @@ export async function GET() {
       })
     );
 
+    console.log('Successfully processed all competitions');
     return NextResponse.json(competitionsWithCoordinates);
   } catch (error) {
     console.error('Error fetching competitions:', error);

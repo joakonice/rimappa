@@ -137,14 +137,22 @@ export async function readCompetitionsFromCSV(): Promise<CompetitionCSV[]> {
     const fileContent = fs.readFileSync(csvPath, 'utf-8');
     const records = parse(fileContent, {
       columns: true,
-      skip_empty_lines: true
+      skip_empty_lines: true,
+      delimiter: ';'
     });
     
-    return records.map((record: any) => ({
-      ...record,
-      maxParticipants: parseInt(record.maxParticipants),
-      rating: record.rating ? parseFloat(record.rating) : undefined
-    }));
+    return records.map((record: any) => {
+      try {
+        return validateCompetitionData({
+          ...record,
+          maxParticipants: parseInt(record.maxParticipants),
+          rating: record.rating ? parseFloat(record.rating) : undefined
+        });
+      } catch (error) {
+        console.error('Error validating competition:', record, error);
+        return null;
+      }
+    }).filter((record): record is CompetitionCSV => record !== null);
   } catch (error) {
     console.error('Error reading competitions from CSV:', error);
     return [];
@@ -154,7 +162,10 @@ export async function readCompetitionsFromCSV(): Promise<CompetitionCSV[]> {
 export async function writeCompetitionsToCSV(competitions: CompetitionCSV[]) {
   try {
     const csvPath = path.join(process.cwd(), 'data', 'competitions.csv');
-    const csvContent = stringify(competitions, { header: true });
+    const csvContent = stringify(competitions, { 
+      header: true,
+      delimiter: ';'
+    });
     fs.writeFileSync(csvPath, csvContent);
     console.log('Competitions written to CSV successfully');
   } catch (error) {
