@@ -98,8 +98,9 @@ export default function CompetitionsPage() {
   const [dateFilter, setDateFilter] = useState<'all' | 'today' | 'week' | 'month'>('all');
   const [typeFilter, setTypeFilter] = useState<'all' | 'microphone' | 'beatbox'>('all');
   const [sortBy, setSortBy] = useState<'distance' | 'popularity' | 'date' | 'name'>('date');
-  const [searchRadius, setSearchRadius] = useState(5000); // metros
   const [searchQuery, setSearchQuery] = useState('');
+  const [useSearchRadius, setUseSearchRadius] = useState(false);
+  const [searchRadius, setSearchRadius] = useState(5000); // metros
 
   const [viewport, setViewport] = useState({
     latitude: -34.6037,
@@ -163,7 +164,6 @@ export default function CompetitionsPage() {
       return false;
     }
 
-    // Por ahora ignoramos el radio de búsqueda ya que necesitaríamos la ubicación del usuario
     return true;
   }).sort((a, b) => {
     // Ordenar según criterio seleccionado
@@ -298,7 +298,19 @@ export default function CompetitionsPage() {
               </div>
 
               <div>
-                <label className="text-sm text-gray-400 block mb-2">Radio de búsqueda</label>
+                <div className="flex justify-between items-center mb-2">
+                  <label className="text-sm text-gray-400">Radio de búsqueda</label>
+                  <button
+                    onClick={() => setUseSearchRadius(!useSearchRadius)}
+                    className={`px-3 py-1 rounded-full text-xs ${
+                      useSearchRadius
+                        ? 'bg-purple-600 text-white'
+                        : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                    }`}
+                  >
+                    {useSearchRadius ? 'Activado' : 'Ver todas'}
+                  </button>
+                </div>
                 <input
                   type="range"
                   min="500"
@@ -306,10 +318,11 @@ export default function CompetitionsPage() {
                   step="500"
                   value={searchRadius}
                   onChange={(e) => setSearchRadius(Number(e.target.value))}
-                  className="w-full accent-purple-600"
+                  className={`w-full accent-purple-600 ${!useSearchRadius && 'opacity-50'}`}
+                  disabled={!useSearchRadius}
                 />
                 <div className="text-sm text-gray-400 mt-1">
-                  {(searchRadius / 1000).toFixed(1)} km
+                  {useSearchRadius ? `${(searchRadius / 1000).toFixed(1)} km` : 'Radio desactivado'}
                 </div>
               </div>
             </div>
