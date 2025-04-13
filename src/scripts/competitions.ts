@@ -3,6 +3,7 @@ import { parse } from 'csv-parse/sync';
 import { Competition, CompetitionStatus, PrismaClient } from '@prisma/client';
 import fs from 'fs';
 import path from 'path';
+import { getCoordinates } from '@/lib/geocoding';
 
 const prisma = new PrismaClient({
   log: ['query'],
@@ -20,25 +21,6 @@ interface CompetitionCSV {
   price?: string;
   prize?: string;
   organizerId: string;
-}
-
-// Función para obtener coordenadas de una ubicación usando MapTiler
-async function getCoordinates(location: string): Promise<{ latitude: number; longitude: number } | null> {
-  try {
-    const response = await fetch(
-      `https://api.maptiler.com/geocoding/${encodeURIComponent(location)}.json?key=${process.env.NEXT_PUBLIC_MAPTILER_KEY}`
-    );
-    const data = await response.json();
-    
-    if (data.features && data.features.length > 0) {
-      const [longitude, latitude] = data.features[0].center;
-      return { latitude, longitude };
-    }
-    return null;
-  } catch (error) {
-    console.error('Error getting coordinates:', error);
-    return null;
-  }
 }
 
 function validateCompetitionData(data: any): CompetitionCSV {
