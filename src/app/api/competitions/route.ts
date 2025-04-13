@@ -71,7 +71,8 @@ export async function GET() {
       ...competition,
       id: competition.title.toLowerCase().replace(/\s+/g, '-'),
       coordinates: [competition.longitude, competition.latitude],
-      currentParticipants: 0 // This should be fetched from a separate source tracking participants
+      currentParticipants: 0, // This should be fetched from a separate source tracking participants
+      image: competition.image || null // Ensure image is included in the response
     }));
 
     console.log('Successfully processed all competitions');

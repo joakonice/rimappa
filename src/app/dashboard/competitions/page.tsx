@@ -27,6 +27,7 @@ interface Competition {
   modality: string;
   price: string;
   rating: string;
+  image?: string;
 }
 
 // Mover los datos mock fuera del componente
@@ -431,9 +432,19 @@ export default function CompetitionsPage() {
                     }}
                   >
                     <div className="cursor-pointer">
-                      <div className="w-6 h-6 bg-purple-600 rounded-full flex items-center justify-center text-white text-xs">
-                        {competition.currentParticipants}
-                      </div>
+                      {competition.image ? (
+                        <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-purple-600">
+                          <img
+                            src={competition.image}
+                            alt={competition.title}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      ) : (
+                        <div className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center text-white text-xs">
+                          {competition.currentParticipants}
+                        </div>
+                      )}
                     </div>
                   </Marker>
                 ))}
