@@ -1,37 +1,22 @@
 import { stringify } from 'csv-stringify/sync';
-import { Competition, CompetitionStatus, Prisma, PrismaClient } from '@prisma/client';
+import { Competition, CompetitionStatus, PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient({
   log: ['query'],
 });
 
-type CompetitionModality = 'ONE_VS_ONE' | 'TWO_VS_TWO' | 'THREE_VS_THREE' | 'FOUR_VS_FOUR' | 'MULTIVERSE' | 'SURVIVAL' | 'CUSTOM';
-
 interface CompetitionCSV {
-  displayName: string;
-  keyName: string;
   title: string;
   description: string;
   date: string;
   location: string;
   maxParticipants: number;
-  currentParticipants: number;
   status: CompetitionStatus;
-  modality: CompetitionModality;
   image?: string;
   rating?: number;
-  price?: string | null;
-  prize?: string | null;
-  judges: string[];
-  hosts: string[];
-  filmmaker?: string | null;
-  music?: string | null;
-  photography?: string | null;
+  price?: string;
+  prize?: string;
   organizerId: string;
-  coordinates?: {
-    latitude: number;
-    longitude: number;
-  };
 }
 
 // Función para obtener coordenadas de una ubicación usando MapTiler
@@ -53,54 +38,92 @@ async function getCoordinates(location: string): Promise<{ latitude: number; lon
   }
 }
 
-// Función para validar los datos de la competencia
-function validateCompetitionData(data: any): data is CompetitionCSV {
-  return (
-    typeof data.displayName === 'string' &&
-    typeof data.keyName === 'string' &&
-    typeof data.title === 'string' &&
-    typeof data.description === 'string' &&
-    typeof data.date === 'string' &&
-    typeof data.location === 'string' &&
-    typeof data.maxParticipants === 'number' &&
-    typeof data.currentParticipants === 'number' &&
-    typeof data.status === 'string' &&
-    typeof data.modality === 'string' &&
-    Array.isArray(data.judges) &&
-    Array.isArray(data.hosts) &&
-    typeof data.organizerId === 'string'
-  );
+function validateCompetitionData(data: any): CompetitionCSV {
+  if (!data.title || typeof data.title !== 'string') {
+    throw new Error('Invalid title');
+  }
+  if (!data.description || typeof data.description !== 'string') {
+    throw new Error('Invalid description');
+  }
+  if (!data.date || typeof data.date !== 'string') {
+    throw new Error('Invalid date');
+  }
+  if (!data.location || typeof data.location !== 'string') {
+    throw new Error('Invalid location');
+  }
+  if (!data.maxParticipants || typeof data.maxParticipants !== 'number') {
+    throw new Error('Invalid maxParticipants');
+  }
+  if (!data.organizerId || typeof data.organizerId !== 'string') {
+    throw new Error('Invalid organizerId');
+  }
+
+  const competitionData: CompetitionCSV = {
+    title: data.title,
+    description: data.description,
+    date: data.date,
+    location: data.location,
+    maxParticipants: data.maxParticipants,
+    status: data.status || CompetitionStatus.OPEN,
+    organizerId: data.organizerId,
+  };
+
+  if (data.image) competitionData.image = data.image;
+  if (data.rating) competitionData.rating = data.rating;
+  if (data.price) competitionData.price = data.price;
+  if (data.prize) competitionData.prize = data.prize;
+
+  return competitionData;
 }
 
-// Función para actualizar las competencias con coordenadas
-async function updateCompetitionsWithCoordinates() {
+async function upsertCompetition(data: CompetitionCSV) {
+  const { organizerId, ...competitionData } = data;
+  
+  // Obtener coordenadas para la ubicación
+  const coordinates = await getCoordinates(competitionData.location);
+  console.log(`Coordinates for ${competitionData.location}:`, coordinates);
+
+  return await prisma.competition.upsert({
+    where: {
+      id: data.title.toLowerCase().replace(/\s+/g, '-'),
+    },
+    update: {
+      ...competitionData,
+      date: new Date(competitionData.date),
+      organizer: {
+        connect: { id: organizerId }
+      },
+      ...(coordinates && {
+        latitude: coordinates.latitude,
+        longitude: coordinates.longitude
+      })
+    },
+    create: {
+      id: data.title.toLowerCase().replace(/\s+/g, '-'),
+      ...competitionData,
+      date: new Date(competitionData.date),
+      organizer: {
+        connect: { id: organizerId }
+      },
+      ...(coordinates && {
+        latitude: coordinates.latitude,
+        longitude: coordinates.longitude
+      })
+    },
+  });
+}
+
+// Función principal para procesar competencias
+export async function processCompetitions(competitionsData: any[]) {
   try {
-    const competitions = await prisma.competition.findMany();
-    
-    for (const competition of competitions) {
-      console.log(`Processing competition: ${competition.title} at ${competition.location}`);
-      
-      const coordinates = await getCoordinates(competition.location);
-      
-      if (coordinates) {
-        await prisma.$executeRaw`
-          UPDATE "Competition"
-          SET latitude = ${coordinates.latitude}, longitude = ${coordinates.longitude}
-          WHERE id = ${competition.id}
-        `;
-        console.log(`Updated coordinates for ${competition.title}: ${JSON.stringify(coordinates)}`);
-      } else {
-        console.log(`Could not find coordinates for ${competition.title} at ${competition.location}`);
-      }
+    for (const data of competitionsData) {
+      const validatedData = validateCompetitionData(data);
+      await upsertCompetition(validatedData);
     }
-    
-    console.log('Competition locations updated successfully');
+    console.log('All competitions processed successfully');
   } catch (error) {
-    console.error('Error updating competitions:', error);
+    console.error('Error processing competitions:', error);
   } finally {
     await prisma.$disconnect();
   }
 }
-
-// Ejecutar la actualización
-updateCompetitionsWithCoordinates();
