@@ -409,7 +409,7 @@ export default function CompetitionsPage() {
             </div>}>
               <div className="h-full w-full">
                 <Map
-                  mapStyle={`https://api.maptiler.com/maps/streets/style.json?key=${process.env.NEXT_PUBLIC_MAPTILER_API_KEY}`}
+                  mapStyle="https://demotiles.maplibre.org/style.json"
                   initialViewState={{
                     longitude: viewport.longitude,
                     latitude: viewport.latitude,
