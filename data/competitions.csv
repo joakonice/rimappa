@@ -1,4 +1,4 @@
-displayName,keyName,eventDate,createdAt,modality,judges,location,price,description,flyerPath
-"Dinastía Freestyle","dinastiafreestyle","2024-05-01T17:00:00Z","2024-03-12T20:00:00Z","TWO_VS_TWO","KIRO, DOSSANTOS, CLAP","Plaza San Martin, Morón","2.500","DOS VS DOS - Fecha #4 del Torneo 10","/images/competitions/flyers/dinastiafreestyle.jpg"
-"El Potrero Freestyle","elpotrerofreestyle","2024-05-15T19:00:00Z","2024-03-12T20:00:00Z","ONE_VS_ONE","MC ONE, TATA, WOLF","El Potrero, CABA","1.500","La mejor competencia under de Capital","/images/competitions/flyers/elpotrerofreestyle.jpg"
-"Multiverse Batalla","multiversebatalla","2024-06-01T20:00:00Z","2024-03-12T20:00:00Z","MULTIVERSE","DTOKE, PAPO, KLAN","Teatro Gran Rex, CABA","5.000","El evento más grande del año","/images/competitions/flyers/multiversebatalla.jpg" 
+displayName;keyName;eventDate;createdAt;modality;judges;location;price;description;flyerPath
+Dinastía Freestyle;dinastiafreestyle;2025-05-01T17:00:00Z;2024-03-12T20:00:00Z;TWO_VS_TWO;KIRO, DOSSANTOS, CLAP;Plaza San Martin, Morón;2.500;DOS VS DOS - Fecha #4 del Torneo 10;/images/competitions/flyers/dinastiafreestyle.jpg
+El Potrero Freestyle;elpotrerofreestyle;2025-05-15T19:00:00Z;2024-03-12T20:00:00Z;ONE_VS_ONE;MC ONE, TATA, WOLF;El Potrero, CABA;1.500;La mejor competencia under de Capital;/images/competitions/flyers/elpotrerofreestyle.jpg
+Multiverse Batalla;multiversebatalla;2025-06-01T20:00:00Z;2024-03-12T20:00:00Z;MULTIVERSE;DTOKE, PAPO, KLAN;Teatro Gran Rex, CABA;5.000;El evento más grande del año;/images/competitions/flyers/multiversebatalla.jpg 

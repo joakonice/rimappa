@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { Map, Marker, Popup } from '@vis.gl/react-maplibre';
@@ -8,6 +8,7 @@ import { CalendarIcon, MapPinIcon, UserGroupIcon, AdjustmentsHorizontalIcon, XMa
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import 'maplibre-gl/dist/maplibre-gl.css';
+import { prisma } from '@/lib/prisma';
 
 interface Competition {
   id: string;
@@ -74,7 +75,7 @@ const mockCompetitions: Competition[] = [
   }
 ];
 
-export default function Competitions() {
+export default async function CompetitionsPage() {
   const { data: session } = useSession();
   const isOrganizer = session?.user?.role === 'ORGANIZER';
   const [showFilters, setShowFilters] = useState(false);
@@ -116,6 +117,8 @@ export default function Competitions() {
 
     return true;
   });
+
+  const competitions = await prisma.competition.findMany();
 
   return (
     <div className="h-[calc(100vh-4rem)]">
@@ -312,68 +315,70 @@ export default function Competitions() {
 
         {/* Mapa */}
         <div className="flex-1">
-          <Map
-            {...viewport}
-            onMove={handleMapMove}
-            style={{ width: '100%', height: '100%' }}
-            mapStyle={`https://api.maptiler.com/maps/streets/style.json?key=${process.env.NEXT_PUBLIC_MAPTILER_KEY}`}
-          >
-            {/* Radio de búsqueda */}
-            <div
-              style={{
-                position: 'absolute',
-                width: `${searchRadius * 2}px`,
-                height: `${searchRadius * 2}px`,
-                borderRadius: '50%',
-                backgroundColor: 'rgba(147, 51, 234, 0.1)',
-                border: '2px solid rgba(147, 51, 234, 0.5)',
-                transform: 'translate(-50%, -50%)',
-                left: '50%',
-                top: '50%',
-                pointerEvents: 'none'
-              }}
-            />
-            {filteredCompetitions.map((competition) => (
-              <Marker
-                key={competition.id}
-                latitude={competition.coordinates[1]}
-                longitude={competition.coordinates[0]}
-              >
-                <div 
-                  className="w-6 h-6 bg-purple-600 rounded-full flex items-center justify-center text-white text-xs cursor-pointer"
-                  onClick={() => setSelectedCompetition(competition)}
+          <Suspense fallback={<div>Loading map...</div>}>
+            <Map
+              {...viewport}
+              onMove={handleMapMove}
+              style={{ width: '100%', height: '100%' }}
+              mapStyle={`https://api.maptiler.com/maps/streets/style.json?key=${process.env.NEXT_PUBLIC_MAPTILER_KEY}`}
+            >
+              {/* Radio de búsqueda */}
+              <div
+                style={{
+                  position: 'absolute',
+                  width: `${searchRadius * 2}px`,
+                  height: `${searchRadius * 2}px`,
+                  borderRadius: '50%',
+                  backgroundColor: 'rgba(147, 51, 234, 0.1)',
+                  border: '2px solid rgba(147, 51, 234, 0.5)',
+                  transform: 'translate(-50%, -50%)',
+                  left: '50%',
+                  top: '50%',
+                  pointerEvents: 'none'
+                }}
+              />
+              {filteredCompetitions.map((competition) => (
+                <Marker
+                  key={competition.id}
+                  latitude={competition.coordinates[1]}
+                  longitude={competition.coordinates[0]}
                 >
-                  {competition.currentParticipants}
-                </div>
-              </Marker>
-            ))}
-
-            {selectedCompetition && (
-              <Popup
-                latitude={selectedCompetition.coordinates[1]}
-                longitude={selectedCompetition.coordinates[0]}
-                onClose={() => setSelectedCompetition(null)}
-                closeButton={true}
-                closeOnClick={false}
-                className="bg-gray-800 text-white"
-              >
-                <div className="p-2">
-                  <h3 className="font-medium">{selectedCompetition.title}</h3>
-                  <p className="text-sm text-gray-300 mt-1">
-                    {selectedCompetition.description}
-                  </p>
-                  <div className="mt-2">
-                    <Link
-                      href={`/dashboard/competitions/${selectedCompetition.id}`}
-                      className="text-purple-400 hover:text-purple-300 text-sm"
-                    >
-                      Ver detalles →
-                    </Link>
+                  <div 
+                    className="w-6 h-6 bg-purple-600 rounded-full flex items-center justify-center text-white text-xs cursor-pointer"
+                    onClick={() => setSelectedCompetition(competition)}
+                  >
+                    {competition.currentParticipants}
                   </div>
-                </div>
-              </Popup>
-            )}
-          </Map>
+                </Marker>
+              ))}
+
+              {selectedCompetition && (
+                <Popup
+                  latitude={selectedCompetition.coordinates[1]}
+                  longitude={selectedCompetition.coordinates[0]}
+                  onClose={() => setSelectedCompetition(null)}
+                  closeButton={true}
+                  closeOnClick={false}
+                  className="bg-gray-800 text-white"
+                >
+                  <div className="p-2">
+                    <h3 className="font-medium">{selectedCompetition.title}</h3>
+                    <p className="text-sm text-gray-300 mt-1">
+                      {selectedCompetition.description}
+                    </p>
+                    <div className="mt-2">
+                      <Link
+                        href={`/dashboard/competitions/${selectedCompetition.id}`}
+                        className="text-purple-400 hover:text-purple-300 text-sm"
+                      >
+                        Ver detalles →
+                      </Link>
+                    </div>
+                  </div>
+                </Popup>
+              )}
+            </Map>
+          </Suspense>
         </div>
       </div>
     </div>
