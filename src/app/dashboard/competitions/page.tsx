@@ -92,7 +92,7 @@ export default function CompetitionsPage() {
   const isOrganizer = session?.user?.role === 'ORGANIZER';
   
   // Estados principales
-  const [competitions, setCompetitions] = useState<Competition[]>([]);
+  const [competitions, setCompetitions] = useState<Competition[]>(MOCK_COMPETITIONS);
   const [selectedCompetition, setSelectedCompetition] = useState<Competition | null>(null);
   
   // Estados para filtros
@@ -109,7 +109,7 @@ export default function CompetitionsPage() {
     zoom: 12
   });
 
-  // Cargar datos iniciales
+  // Cargar datos de la API
   useEffect(() => {
     const loadCompetitions = async () => {
       try {
@@ -118,10 +118,12 @@ export default function CompetitionsPage() {
           throw new Error('Error al cargar las competencias');
         }
         const data = await response.json();
-        setCompetitions(data);
+        if (data && data.length > 0) {
+          setCompetitions(data);
+        }
       } catch (error) {
-        console.log('Usando datos mock debido a error:', error);
-        setCompetitions(MOCK_COMPETITIONS);
+        console.log('Error al cargar competencias de la API:', error);
+        // Mantenemos los datos mock si hay un error
       }
     };
 
@@ -130,7 +132,7 @@ export default function CompetitionsPage() {
 
   // Filtrar competencias
   const filteredCompetitions = useMemo(() => {
-    console.log('Filtrando competencias:', competitions.length);
+    console.log('Filtrando competencias:', competitions.length, competitions);
     
     return competitions.filter(competition => {
       // Búsqueda por texto
@@ -167,7 +169,12 @@ export default function CompetitionsPage() {
       }
 
       return true;
-    }).sort((a, b) => {
+    });
+  }, [competitions, searchQuery, typeFilter, dateFilter]);
+
+  // Ordenar competencias
+  const sortedCompetitions = useMemo(() => {
+    return [...filteredCompetitions].sort((a, b) => {
       switch (sortBy) {
         case 'date':
           return new Date(a.date).getTime() - new Date(b.date).getTime();
@@ -179,13 +186,14 @@ export default function CompetitionsPage() {
           return 0;
       }
     });
-  }, [competitions, searchQuery, typeFilter, dateFilter, sortBy]);
+  }, [filteredCompetitions, sortBy]);
 
   // Debugging
   useEffect(() => {
     console.log('Estado actual:', {
       competitionsCount: competitions.length,
       filteredCount: filteredCompetitions.length,
+      sortedCount: sortedCompetitions.length,
       filters: {
         dateFilter,
         typeFilter,
@@ -195,7 +203,7 @@ export default function CompetitionsPage() {
         searchQuery
       }
     });
-  }, [competitions, filteredCompetitions, dateFilter, typeFilter, sortBy, useSearchRadius, searchRadius, searchQuery]);
+  }, [competitions, filteredCompetitions, sortedCompetitions, dateFilter, typeFilter, sortBy, useSearchRadius, searchRadius, searchQuery]);
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -337,7 +345,7 @@ export default function CompetitionsPage() {
 
             {/* Lista de competencias */}
             <div className="space-y-4">
-              {filteredCompetitions.map((competition) => (
+              {sortedCompetitions.map((competition) => (
                 <div
                   key={competition.id}
                   className="bg-gray-700 rounded-lg p-4 hover:bg-gray-600 transition-colors cursor-pointer"
@@ -412,7 +420,7 @@ export default function CompetitionsPage() {
                 }}
               >
                 <NavigationControl />
-                {filteredCompetitions.map((competition) => (
+                {sortedCompetitions.map((competition) => (
                   <Marker
                     key={competition.id}
                     longitude={competition.coordinates[0]}
