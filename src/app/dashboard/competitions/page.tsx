@@ -417,38 +417,35 @@ export default function CompetitionsPage() {
               <div className="text-white">Cargando mapa...</div>
             </div>}>
               <Map
-                longitude={-3.7038}
-                latitude={40.4168}
-                zoom={6}
-                style={{ width: '100%', height: '400px' }}
+                longitude={-58.3815}
+                latitude={-34.6037}
+                zoom={12}
+                style={{ width: '100%', height: '100%' }}
                 mapStyle={`https://api.maptiler.com/maps/streets/style.json?key=${process.env.NEXT_PUBLIC_MAPTILER_KEY}`}
               >
                 <NavigationControl />
-                {filteredCompetitions.map((competition) => {
-                  const location = JSON.parse(competition.location);
-                  return (
-                    <Marker
-                      key={competition.id}
-                      longitude={location.longitude}
-                      latitude={location.latitude}
+                {filteredCompetitions.map((competition) => (
+                  <Marker
+                    key={competition.id}
+                    longitude={competition.coordinates[0]}
+                    latitude={competition.coordinates[1]}
+                  >
+                    <Popup
+                      longitude={competition.coordinates[0]}
+                      latitude={competition.coordinates[1]}
+                      closeButton={true}
+                      closeOnClick={false}
                     >
-                      <Popup
-                        longitude={location.longitude}
-                        latitude={location.latitude}
-                        closeButton={true}
-                        closeOnClick={false}
-                      >
-                        <div className="p-2">
-                          <h3 className="font-bold">{competition.title}</h3>
-                          <p>{competition.description}</p>
-                          <p className="text-sm text-gray-500">
-                            {format(new Date(competition.date), 'PPP', { locale: es })}
-                          </p>
-                        </div>
-                      </Popup>
-                    </Marker>
-                  );
-                })}
+                      <div className="p-2">
+                        <h3 className="font-bold">{competition.title}</h3>
+                        <p>{competition.description}</p>
+                        <p className="text-sm text-gray-500">
+                          {format(new Date(competition.date), 'PPP', { locale: es })}
+                        </p>
+                      </div>
+                    </Popup>
+                  </Marker>
+                ))}
               </Map>
             </Suspense>
           </div>
