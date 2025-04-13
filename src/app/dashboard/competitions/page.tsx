@@ -97,7 +97,7 @@ export default function CompetitionsPage() {
   
   // Estados para filtros
   const [dateFilter, setDateFilter] = useState<'all' | 'today' | 'week' | 'month'>('all');
-  const [typeFilter, setTypeFilter] = useState<'all' | 'freestyle' | 'underground'>('all');
+  const [typeFilter, setTypeFilter] = useState<'all' | 'freestyle' | 'underground' | 'dinastiafreestyle'>('all');
   const [sortBy, setSortBy] = useState<'distance' | 'popularity' | 'date' | 'name'>('date');
   const [searchQuery, setSearchQuery] = useState('');
   const [useSearchRadius, setUseSearchRadius] = useState(false);
@@ -272,7 +272,8 @@ export default function CompetitionsPage() {
                   {[
                     { value: 'all', label: 'Todos' },
                     { value: 'freestyle', label: 'Freestyle' },
-                    { value: 'underground', label: 'Underground' }
+                    { value: 'underground', label: 'Underground' },
+                    { value: 'dinastiafreestyle', label: 'Dinastía Freestyle' }
                   ].map((type) => (
                     <button
                       key={type.value}
