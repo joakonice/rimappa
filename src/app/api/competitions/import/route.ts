@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { prisma } from '@/lib/prisma';
-import { Prisma } from '@prisma/client';
-import fs from 'fs';
-import path from 'path';
+import { processCompetitions } from '@/scripts/competitions';
+import { UserRole } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 import { parse } from 'csv-parse/sync';
+
+const prisma = new PrismaClient();
 
 // Función para obtener coordenadas de una ubicación usando MapTiler
 async function getCoordinates(location: string): Promise<{ latitude: number; longitude: number } | null> {
@@ -26,68 +27,43 @@ async function getCoordinates(location: string): Promise<{ latitude: number; lon
   }
 }
 
-export async function GET() {
+export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session || session.user.role !== 'ADMIN') {
+    if (!session || session.user.role !== UserRole.ADMIN) {
       return NextResponse.json(
         { error: 'No autorizado' },
         { status: 401 }
       );
     }
 
-    // Leer el archivo CSV
-    const csvPath = path.join(process.cwd(), 'data', 'competitions.csv');
-    const fileContent = fs.readFileSync(csvPath, 'utf-8');
-    const records = parse(fileContent, {
-      columns: true,
-      skip_empty_lines: true
-    });
+    const formData = await req.formData();
+    const file = formData.get('file') as File;
 
-    // Procesar cada competencia
-    for (const record of records) {
-      const coordinates = await getCoordinates(record.location);
-      
-      const competitionData: Prisma.CompetitionCreateInput = {
-        title: record.title,
-        description: record.description,
-        date: new Date(record.date),
-        location: record.location,
-        maxParticipants: parseInt(record.maxParticipants),
-        status: record.status,
-        modality: record.modality,
-        displayName: record.displayName,
-        keyName: record.keyName,
-        organizer: {
-          connect: {
-            id: record.organizerId
-          }
-        },
-        ...(coordinates && {
-          latitude: coordinates.latitude,
-          longitude: coordinates.longitude
-        })
-      };
-
-      // Crear o actualizar la competencia
-      await prisma.competition.upsert({
-        where: {
-          keyName: record.keyName
-        },
-        update: {
-          ...competitionData,
-          organizer: undefined
-        },
-        create: competitionData
-      });
+    if (!file) {
+      return NextResponse.json(
+        { error: 'No se proporcionó ningún archivo' },
+        { status: 400 }
+      );
     }
 
-    return NextResponse.json({ message: 'Competencias importadas exitosamente' });
-  } catch (error) {
-    console.error('Error importing competitions:', error);
+    const fileContent = await file.text();
+    const competitions = parse(fileContent, {
+      columns: true,
+      skip_empty_lines: true,
+    });
+
+    await processCompetitions(competitions);
+
     return NextResponse.json(
-      { error: 'Error al importar competencias' },
+      { message: 'Competencias importadas exitosamente' },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error('Error al importar competencias:', error);
+    return NextResponse.json(
+      { error: 'Error al procesar el archivo' },
       { status: 500 }
     );
   }
