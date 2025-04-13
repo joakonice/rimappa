@@ -75,9 +75,10 @@ const mockCompetitions: Competition[] = [
   }
 ];
 
-export default async function CompetitionsPage() {
+export default function CompetitionsPage() {
   const { data: session } = useSession();
   const isOrganizer = session?.user?.role === 'ORGANIZER';
+  const [competitions, setCompetitions] = useState<Competition[]>(mockCompetitions);
   const [showFilters, setShowFilters] = useState(false);
   const [selectedCompetition, setSelectedCompetition] = useState<Competition | null>(null);
   
@@ -95,11 +96,27 @@ export default async function CompetitionsPage() {
     zoom: 12
   });
 
+  useEffect(() => {
+    const fetchCompetitions = async () => {
+      try {
+        const response = await fetch('/api/competitions');
+        if (response.ok) {
+          const data = await response.json();
+          setCompetitions(data);
+        }
+      } catch (error) {
+        console.error('Error fetching competitions:', error);
+      }
+    };
+
+    fetchCompetitions();
+  }, []);
+
   const handleMapMove = (evt: any) => {
     setViewport(evt.viewState);
   };
 
-  const filteredCompetitions = mockCompetitions.filter(competition => {
+  const filteredCompetitions = competitions.filter(competition => {
     if (dateFilter === 'today') {
       const today = new Date();
       return competition.date.toDateString() === today.toDateString();
@@ -117,8 +134,6 @@ export default async function CompetitionsPage() {
 
     return true;
   });
-
-  const competitions = await prisma.competition.findMany();
 
   return (
     <div className="h-[calc(100vh-4rem)]">
@@ -314,13 +329,19 @@ export default async function CompetitionsPage() {
         </div>
 
         {/* Mapa */}
-        <div className="flex-1">
-          <Suspense fallback={<div>Loading map...</div>}>
+        <div className="flex-1 relative">
+          <Suspense fallback={<div className="w-full h-full flex items-center justify-center bg-gray-900">
+            <div className="text-white">Cargando mapa...</div>
+          </div>}>
             <Map
               {...viewport}
               onMove={handleMapMove}
               style={{ width: '100%', height: '100%' }}
               mapStyle={`https://api.maptiler.com/maps/streets/style.json?key=${process.env.NEXT_PUBLIC_MAPTILER_KEY}`}
+              attributionControl={{
+                compact: true,
+                customAttribution: 'MapTiler'
+              }}
             >
               {/* Radio de búsqueda */}
               <div
@@ -340,8 +361,8 @@ export default async function CompetitionsPage() {
               {filteredCompetitions.map((competition) => (
                 <Marker
                   key={competition.id}
-                  latitude={competition.coordinates[1]}
-                  longitude={competition.coordinates[0]}
+                  latitude={competition.coordinates?.[1] || 0}
+                  longitude={competition.coordinates?.[0] || 0}
                 >
                   <div 
                     className="w-6 h-6 bg-purple-600 rounded-full flex items-center justify-center text-white text-xs cursor-pointer"
@@ -354,8 +375,8 @@ export default async function CompetitionsPage() {
 
               {selectedCompetition && (
                 <Popup
-                  latitude={selectedCompetition.coordinates[1]}
-                  longitude={selectedCompetition.coordinates[0]}
+                  latitude={selectedCompetition.coordinates?.[1] || 0}
+                  longitude={selectedCompetition.coordinates?.[0] || 0}
                   onClose={() => setSelectedCompetition(null)}
                   closeButton={true}
                   closeOnClick={false}

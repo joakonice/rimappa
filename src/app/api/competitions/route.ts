@@ -3,8 +3,7 @@ import { getServerSession } from 'next-auth';
 import { PrismaClient } from '@prisma/client';
 import { z } from 'zod';
 import { authOptions } from '@/lib/auth';
-
-const prisma = new PrismaClient();
+import { prisma } from '@/lib/prisma';
 
 const competitionSchema = z.object({
   title: z.string().min(3),
@@ -59,22 +58,9 @@ export async function POST(request: Request) {
   }
 }
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
-    const { searchParams } = new URL(request.url);
-    const status = searchParams.get('status');
-    const organizerId = searchParams.get('organizerId');
-
-    const where: any = {};
-    if (status) {
-      where.status = status;
-    }
-    if (organizerId) {
-      where.organizerId = organizerId;
-    }
-
     const competitions = await prisma.competition.findMany({
-      where,
       include: {
         organizer: {
           select: {
@@ -82,23 +68,20 @@ export async function GET(request: Request) {
             name: true,
           },
         },
-        participants: {
-          select: {
-            id: true,
-            status: true,
-          },
-        },
-      },
-      orderBy: {
-        date: 'asc',
       },
     });
 
-    return NextResponse.json(competitions);
+    // Serialize dates to ISO string format
+    const serializedCompetitions = competitions.map(comp => ({
+      ...comp,
+      date: comp.date.toISOString(),
+    }));
+
+    return NextResponse.json(serializedCompetitions);
   } catch (error) {
     console.error('Error fetching competitions:', error);
     return NextResponse.json(
-      { error: 'Error al obtener las competencias' },
+      { error: 'Error fetching competitions' },
       { status: 500 }
     );
   }
