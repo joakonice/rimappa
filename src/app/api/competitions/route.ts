@@ -66,22 +66,13 @@ export async function GET() {
     const competitions = await readCompetitionsFromCSV();
     console.log(`Found ${competitions.length} competitions in CSV`);
     
-    // Transform the data to include coordinates
-    console.log('Adding coordinates to competitions...');
-    const competitionsWithCoordinates = await Promise.all(
-      competitions.map(async (competition) => {
-        console.log(`Getting coordinates for location: ${competition.location}`);
-        const coordinates = await getCoordinates(competition.location);
-        console.log(`Coordinates for ${competition.location}:`, coordinates);
-        
-        return {
-          ...competition,
-          id: competition.title.toLowerCase().replace(/\s+/g, '-'),
-          coordinates: coordinates ? [coordinates.longitude, coordinates.latitude] : [-58.3815, -34.6037], // Default to CABA
-          currentParticipants: 0, // This should be fetched from a separate source tracking participants
-        };
-      })
-    );
+    // Transform the data to include coordinates in the format expected by el mapa
+    const competitionsWithCoordinates = competitions.map(competition => ({
+      ...competition,
+      id: competition.title.toLowerCase().replace(/\s+/g, '-'),
+      coordinates: [competition.longitude, competition.latitude],
+      currentParticipants: 0 // This should be fetched from a separate source tracking participants
+    }));
 
     console.log('Successfully processed all competitions');
     return NextResponse.json(competitionsWithCoordinates);

@@ -3,7 +3,6 @@ import { parse } from 'csv-parse/sync';
 import { Competition, CompetitionStatus, PrismaClient } from '@prisma/client';
 import fs from 'fs';
 import path from 'path';
-import { getCoordinates } from '@/lib/geocoding';
 
 const prisma = new PrismaClient({
   log: ['query'],
@@ -21,6 +20,8 @@ interface CompetitionCSV {
   price?: string;
   prize?: string;
   organizerId: string;
+  latitude: number;
+  longitude: number;
 }
 
 function validateCompetitionData(data: any): CompetitionCSV {
@@ -42,6 +43,12 @@ function validateCompetitionData(data: any): CompetitionCSV {
   if (!data.organizerId || typeof data.organizerId !== 'string') {
     throw new Error('Invalid organizerId');
   }
+  if (typeof data.latitude !== 'number') {
+    throw new Error('Invalid latitude');
+  }
+  if (typeof data.longitude !== 'number') {
+    throw new Error('Invalid longitude');
+  }
 
   const competitionData: CompetitionCSV = {
     title: data.title,
@@ -51,6 +58,8 @@ function validateCompetitionData(data: any): CompetitionCSV {
     maxParticipants: data.maxParticipants,
     status: data.status || CompetitionStatus.OPEN,
     organizerId: data.organizerId,
+    latitude: data.latitude,
+    longitude: data.longitude
   };
 
   if (data.image) competitionData.image = data.image;
@@ -63,10 +72,6 @@ function validateCompetitionData(data: any): CompetitionCSV {
 
 async function upsertCompetition(data: CompetitionCSV) {
   const { organizerId, ...competitionData } = data;
-  
-  // Obtener coordenadas para la ubicación
-  const coordinates = await getCoordinates(competitionData.location);
-  console.log(`Coordinates for ${competitionData.location}:`, coordinates);
 
   return await prisma.competition.upsert({
     where: {
@@ -77,11 +82,7 @@ async function upsertCompetition(data: CompetitionCSV) {
       date: new Date(competitionData.date),
       organizer: {
         connect: { id: organizerId }
-      },
-      ...(coordinates && {
-        latitude: coordinates.latitude,
-        longitude: coordinates.longitude
-      })
+      }
     },
     create: {
       id: data.title.toLowerCase().replace(/\s+/g, '-'),
@@ -89,28 +90,9 @@ async function upsertCompetition(data: CompetitionCSV) {
       date: new Date(competitionData.date),
       organizer: {
         connect: { id: organizerId }
-      },
-      ...(coordinates && {
-        latitude: coordinates.latitude,
-        longitude: coordinates.longitude
-      })
+      }
     },
   });
-}
-
-// Función principal para procesar competencias
-export async function processCompetitions(competitionsData: any[]) {
-  try {
-    for (const data of competitionsData) {
-      const validatedData = validateCompetitionData(data);
-      await upsertCompetition(validatedData);
-    }
-    console.log('All competitions processed successfully');
-  } catch (error) {
-    console.error('Error processing competitions:', error);
-  } finally {
-    await prisma.$disconnect();
-  }
 }
 
 export async function readCompetitionsFromCSV(): Promise<CompetitionCSV[]> {
@@ -128,7 +110,9 @@ export async function readCompetitionsFromCSV(): Promise<CompetitionCSV[]> {
         return validateCompetitionData({
           ...record,
           maxParticipants: parseInt(record.maxParticipants),
-          rating: record.rating ? parseFloat(record.rating) : undefined
+          rating: record.rating ? parseFloat(record.rating) : undefined,
+          latitude: parseFloat(record.latitude),
+          longitude: parseFloat(record.longitude)
         });
       } catch (error) {
         console.error('Error validating competition:', record, error);
@@ -152,5 +136,20 @@ export async function writeCompetitionsToCSV(competitions: CompetitionCSV[]) {
     console.log('Competitions written to CSV successfully');
   } catch (error) {
     console.error('Error writing competitions to CSV:', error);
+  }
+}
+
+// Función principal para procesar competencias
+export async function processCompetitions(competitionsData: any[]) {
+  try {
+    for (const data of competitionsData) {
+      const validatedData = validateCompetitionData(data);
+      await upsertCompetition(validatedData);
+    }
+    console.log('All competitions processed successfully');
+  } catch (error) {
+    console.error('Error processing competitions:', error);
+  } finally {
+    await prisma.$disconnect();
   }
 }
