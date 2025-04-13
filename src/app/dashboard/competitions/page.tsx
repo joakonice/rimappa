@@ -97,8 +97,8 @@ export default function CompetitionsPage() {
   // Estados para filtros
   const [dateFilter, setDateFilter] = useState<'all' | 'today' | 'week' | 'month'>('all');
   const [typeFilter, setTypeFilter] = useState<'all' | 'microphone' | 'beatbox'>('all');
-  const [sortBy, setSortBy] = useState<'distance' | 'popularity' | 'date' | 'name'>('distance');
-  const [searchRadius, setSearchRadius] = useState(2000); // metros
+  const [sortBy, setSortBy] = useState<'distance' | 'popularity' | 'date' | 'name'>('date');
+  const [searchRadius, setSearchRadius] = useState(5000); // metros
   const [searchQuery, setSearchQuery] = useState('');
 
   const [viewport, setViewport] = useState({
@@ -149,11 +149,11 @@ export default function CompetitionsPage() {
           break;
         case 'week':
           const weekFromNow = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
-          if (competitionDate > weekFromNow) return false;
+          if (competitionDate > weekFromNow || competitionDate < today) return false;
           break;
         case 'month':
           const monthFromNow = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
-          if (competitionDate > monthFromNow) return false;
+          if (competitionDate > monthFromNow || competitionDate < today) return false;
           break;
       }
     }
@@ -163,6 +163,7 @@ export default function CompetitionsPage() {
       return false;
     }
 
+    // Por ahora ignoramos el radio de búsqueda ya que necesitaríamos la ubicación del usuario
     return true;
   }).sort((a, b) => {
     // Ordenar según criterio seleccionado
@@ -173,10 +174,20 @@ export default function CompetitionsPage() {
         return a.title.localeCompare(b.title);
       case 'popularity':
         return b.currentParticipants - a.currentParticipants;
+      case 'distance':
+        // Por ahora, si es por distancia, ordenamos por fecha como fallback
+        return new Date(a.date).getTime() - new Date(b.date).getTime();
       default:
         return 0;
     }
   });
+
+  // Agregar console.log para debugging
+  useEffect(() => {
+    console.log('Competitions:', competitions);
+    console.log('Filtered Competitions:', filteredCompetitions);
+    console.log('Current filters:', { dateFilter, typeFilter, sortBy, searchRadius, searchQuery });
+  }, [competitions, filteredCompetitions, dateFilter, typeFilter, sortBy, searchRadius, searchQuery]);
 
   return (
     <div className="container mx-auto px-4 py-8">
