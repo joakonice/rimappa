@@ -409,7 +409,7 @@ export default function CompetitionsPage() {
             </div>}>
               <div className="h-full w-full">
                 <Map
-                  mapStyle="https://demotiles.maplibre.org/style.json"
+                  mapStyle="https://openmaptiles.org/styles/osm-bright/style.json"
                   initialViewState={{
                     longitude: viewport.longitude,
                     latitude: viewport.latitude,
