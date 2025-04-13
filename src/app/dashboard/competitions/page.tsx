@@ -96,7 +96,7 @@ export default function CompetitionsPage() {
   
   // Estados para filtros
   const [dateFilter, setDateFilter] = useState<'all' | 'today' | 'week' | 'month'>('all');
-  const [typeFilter, setTypeFilter] = useState<'all' | 'microphone' | 'beatbox'>('all');
+  const [typeFilter, setTypeFilter] = useState<'all' | 'freestyle' | 'underground'>('all');
   const [sortBy, setSortBy] = useState<'distance' | 'popularity' | 'date' | 'name'>('date');
   const [searchQuery, setSearchQuery] = useState('');
   const [useSearchRadius, setUseSearchRadius] = useState(false);
@@ -134,8 +134,11 @@ export default function CompetitionsPage() {
 
   // Filtrar competencias basado en los filtros activos
   const filteredCompetitions = competitions.filter(competition => {
+    console.log('Evaluando competencia:', competition.title);
+    
     // Filtro por búsqueda
     if (searchQuery && !competition.title.toLowerCase().includes(searchQuery.toLowerCase())) {
+      console.log('Filtrado por búsqueda');
       return false;
     }
 
@@ -143,27 +146,43 @@ export default function CompetitionsPage() {
     if (dateFilter !== 'all') {
       const today = new Date();
       const competitionDate = new Date(competition.date);
+      console.log('Fecha competencia:', competitionDate, 'Filtro:', dateFilter);
       
       switch (dateFilter) {
         case 'today':
-          if (competitionDate.toDateString() !== today.toDateString()) return false;
+          if (competitionDate.toDateString() !== today.toDateString()) {
+            console.log('Filtrado por fecha - hoy');
+            return false;
+          }
           break;
         case 'week':
           const weekFromNow = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
-          if (competitionDate > weekFromNow || competitionDate < today) return false;
+          if (competitionDate > weekFromNow || competitionDate < today) {
+            console.log('Filtrado por fecha - semana');
+            return false;
+          }
           break;
         case 'month':
           const monthFromNow = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
-          if (competitionDate > monthFromNow || competitionDate < today) return false;
+          if (competitionDate > monthFromNow || competitionDate < today) {
+            console.log('Filtrado por fecha - mes');
+            return false;
+          }
           break;
       }
     }
 
     // Filtro por tipo
-    if (typeFilter !== 'all' && competition.modality.toLowerCase() !== typeFilter) {
-      return false;
+    if (typeFilter !== 'all') {
+      const modalityLower = competition.modality.toLowerCase();
+      console.log('Modalidad:', modalityLower, 'Filtro:', typeFilter);
+      if (!modalityLower.includes(typeFilter)) {
+        console.log('Filtrado por tipo');
+        return false;
+      }
     }
 
+    console.log('Competencia aceptada:', competition.title);
     return true;
   }).sort((a, b) => {
     // Ordenar según criterio seleccionado
@@ -255,8 +274,8 @@ export default function CompetitionsPage() {
                 <div className="flex flex-wrap gap-2">
                   {[
                     { value: 'all', label: 'Todos' },
-                    { value: 'microphone', label: 'Micrófono' },
-                    { value: 'beatbox', label: 'BeatBox' }
+                    { value: 'freestyle', label: 'Freestyle' },
+                    { value: 'underground', label: 'Underground' }
                   ].map((type) => (
                     <button
                       key={type.value}
