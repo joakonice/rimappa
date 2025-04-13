@@ -407,66 +407,70 @@ export default function CompetitionsPage() {
             <Suspense fallback={<div className="w-full h-full flex items-center justify-center bg-gray-900">
               <div className="text-white">Cargando mapa...</div>
             </div>}>
-              <Map
-                longitude={viewport.longitude}
-                latitude={viewport.latitude}
-                zoom={viewport.zoom}
-                style={{ width: '100%', height: '100%' }}
-                mapStyle={`https://api.maptiler.com/maps/streets/style.json?key=${process.env.NEXT_PUBLIC_MAPTILER_KEY}`}
-                dragRotate={false}
-                onMove={evt => setViewport(evt.viewState)}
-                onClick={evt => {
-                  // Cerrar el popup si se hace click en el mapa
-                  setSelectedCompetition(null);
-                }}
-              >
-                <NavigationControl />
-                {sortedCompetitions.map((competition) => (
-                  <Marker
-                    key={competition.id}
-                    longitude={competition.coordinates[0]}
-                    latitude={competition.coordinates[1]}
-                    onClick={e => {
-                      e.originalEvent.stopPropagation();
-                      setSelectedCompetition(competition);
+              <div className="flex flex-col gap-4">
+                <div className="h-[400px] w-full">
+                  <Map
+                    mapStyle={`https://api.maptiler.com/maps/streets/style.json?key=${process.env.NEXT_PUBLIC_MAPTILER_API_KEY}`}
+                    longitude={viewport.longitude}
+                    latitude={viewport.latitude}
+                    zoom={viewport.zoom}
+                    style={{ width: '100%', height: '100%' }}
+                    dragRotate={false}
+                    onMove={evt => setViewport(evt.viewState)}
+                    onClick={evt => {
+                      // Cerrar el popup si se hace click en el mapa
+                      setSelectedCompetition(null);
                     }}
                   >
-                    <div className="cursor-pointer">
-                      {competition.image ? (
-                        <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-purple-600">
-                          <img
-                            src={competition.image}
-                            alt={competition.title}
-                            className="w-full h-full object-cover"
-                          />
+                    <NavigationControl />
+                    {sortedCompetitions.map((competition) => (
+                      <Marker
+                        key={competition.id}
+                        longitude={competition.coordinates[0]}
+                        latitude={competition.coordinates[1]}
+                        onClick={e => {
+                          e.originalEvent.stopPropagation();
+                          setSelectedCompetition(competition);
+                        }}
+                      >
+                        <div className="cursor-pointer">
+                          {competition.image ? (
+                            <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-purple-600">
+                              <img
+                                src={competition.image}
+                                alt={competition.title}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                          ) : (
+                            <div className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center text-white text-xs">
+                              {competition.currentParticipants}
+                            </div>
+                          )}
                         </div>
-                      ) : (
-                        <div className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center text-white text-xs">
-                          {competition.currentParticipants}
+                      </Marker>
+                    ))}
+                    {selectedCompetition && (
+                      <Popup
+                        longitude={selectedCompetition.coordinates[0]}
+                        latitude={selectedCompetition.coordinates[1]}
+                        closeButton={true}
+                        closeOnClick={false}
+                        onClose={() => setSelectedCompetition(null)}
+                        anchor="bottom"
+                      >
+                        <div className="p-2">
+                          <h3 className="font-bold">{selectedCompetition.title}</h3>
+                          <p>{selectedCompetition.description}</p>
+                          <p className="text-sm text-gray-500">
+                            {format(new Date(selectedCompetition.date), 'PPP', { locale: es })}
+                          </p>
                         </div>
-                      )}
-                    </div>
-                  </Marker>
-                ))}
-                {selectedCompetition && (
-                  <Popup
-                    longitude={selectedCompetition.coordinates[0]}
-                    latitude={selectedCompetition.coordinates[1]}
-                    closeButton={true}
-                    closeOnClick={false}
-                    onClose={() => setSelectedCompetition(null)}
-                    anchor="bottom"
-                  >
-                    <div className="p-2">
-                      <h3 className="font-bold">{selectedCompetition.title}</h3>
-                      <p>{selectedCompetition.description}</p>
-                      <p className="text-sm text-gray-500">
-                        {format(new Date(selectedCompetition.date), 'PPP', { locale: es })}
-                      </p>
-                    </div>
-                  </Popup>
-                )}
-              </Map>
+                      </Popup>
+                    )}
+                  </Map>
+                </div>
+              </div>
             </Suspense>
           </div>
         </div>

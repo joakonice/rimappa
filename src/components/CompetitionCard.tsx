@@ -57,6 +57,8 @@ export default function CompetitionCard({ competition }: CompetitionCardProps) {
     (p) => p.id === session?.user?.id
   );
   const isFull = competition.participants.length >= competition.maxParticipants;
+  const defaultImage = '/images/competitions/default.jpg';
+  const [imageError, setImageError] = useState(false);
 
   const handleParticipate = async () => {
     if (!session) {
@@ -95,10 +97,12 @@ export default function CompetitionCard({ competition }: CompetitionCardProps) {
     >
       {/* Background Image */}
       <Image
-        src={competition.image}
+        src={imageError ? defaultImage : (competition.image || defaultImage)}
         alt={competition.title}
         fill
         className="object-cover transition-transform group-hover:scale-105 opacity-90"
+        onError={() => setImageError(true)}
+        priority
       />
       
       {/* Gradient Overlay */}
