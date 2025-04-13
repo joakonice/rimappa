@@ -15,6 +15,7 @@ enum UserRole {
   USER
   ADMIN
   ORGANIZER
+  COMPETITOR
 }
 
 enum CompetitionStatus {
