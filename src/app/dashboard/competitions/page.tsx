@@ -94,10 +94,9 @@ export default function CompetitionsPage() {
   const [showFilters, setShowFilters] = useState(false);
   const [selectedCompetition, setSelectedCompetition] = useState<Competition | null>(null);
   
-  // Nuevos estados para filtros
+  // Estados para filtros
   const [dateFilter, setDateFilter] = useState<'all' | 'today' | 'week' | 'month'>('all');
   const [typeFilter, setTypeFilter] = useState<'all' | 'microphone' | 'beatbox'>('all');
-  const [priceFilter, setPriceFilter] = useState<'all' | 'free' | 'weekend'>('all');
   const [sortBy, setSortBy] = useState<'distance' | 'popularity' | 'date' | 'name'>('distance');
   const [searchRadius, setSearchRadius] = useState(2000); // metros
   const [searchQuery, setSearchQuery] = useState('');
@@ -106,13 +105,6 @@ export default function CompetitionsPage() {
     latitude: -34.6037,
     longitude: -58.3815,
     zoom: 12
-  });
-
-  const [filters, setFilters] = useState({
-    status: 'all',
-    modality: 'all',
-    price: 'all',
-    rating: 'all'
   });
 
   const [loading, setLoading] = useState(true);
@@ -129,6 +121,8 @@ export default function CompetitionsPage() {
         setCompetitions(data);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Error desconocido');
+        // Mientras tanto, usar datos mock
+        setCompetitions(mockCompetitions);
       } finally {
         setLoading(false);
       }
@@ -137,86 +131,65 @@ export default function CompetitionsPage() {
     fetchCompetitions();
   }, []);
 
-  // Obtener valores únicos para los filtros
-  const uniqueStatuses = ['all', ...Array.from(new Set(competitions.map(c => c.status)))];
-  const uniqueModalities = ['all', ...Array.from(new Set(competitions.map(c => c.modality)))];
-  const uniquePrices = ['all', ...Array.from(new Set(competitions.map(c => c.price)))];
-  const uniqueRatings = ['all', ...Array.from(new Set(competitions.map(c => c.rating)))];
-
+  // Filtrar competencias basado en los filtros activos
   const filteredCompetitions = competitions.filter(competition => {
-    if (filters.status !== 'all' && competition.status !== filters.status) return false;
-    if (filters.modality !== 'all' && competition.modality !== filters.modality) return false;
-    if (filters.price !== 'all' && competition.price !== filters.price) return false;
-    if (filters.rating !== 'all' && competition.rating !== filters.rating) return false;
-    return true;
-  });
+    // Filtro por búsqueda
+    if (searchQuery && !competition.title.toLowerCase().includes(searchQuery.toLowerCase())) {
+      return false;
+    }
 
-  const handleMapMove = (evt: any) => {
-    setViewport(evt.viewState);
-  };
+    // Filtro por fecha
+    if (dateFilter !== 'all') {
+      const today = new Date();
+      const competitionDate = new Date(competition.date);
+      
+      switch (dateFilter) {
+        case 'today':
+          if (competitionDate.toDateString() !== today.toDateString()) return false;
+          break;
+        case 'week':
+          const weekFromNow = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
+          if (competitionDate > weekFromNow) return false;
+          break;
+        case 'month':
+          const monthFromNow = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
+          if (competitionDate > monthFromNow) return false;
+          break;
+      }
+    }
+
+    // Filtro por tipo
+    if (typeFilter !== 'all' && competition.modality.toLowerCase() !== typeFilter) {
+      return false;
+    }
+
+    return true;
+  }).sort((a, b) => {
+    // Ordenar según criterio seleccionado
+    switch (sortBy) {
+      case 'date':
+        return new Date(a.date).getTime() - new Date(b.date).getTime();
+      case 'name':
+        return a.title.localeCompare(b.title);
+      case 'popularity':
+        return b.currentParticipants - a.currentParticipants;
+      default:
+        return 0;
+    }
+  });
 
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Competencias</h1>
-        <button 
-          onClick={() => {
-            // Implementa la lógica para crear una nueva competencia
-          }}
-          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-        >
-          Crear Competencia
-        </button>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        <select
-          value={filters.status}
-          onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-          className="p-2 border rounded"
-        >
-          {uniqueStatuses.map(status => (
-            <option key={status} value={status}>
-              {status === 'all' ? 'Todos los estados' : status}
-            </option>
-          ))}
-        </select>
-
-        <select
-          value={filters.modality}
-          onChange={(e) => setFilters({ ...filters, modality: e.target.value })}
-          className="p-2 border rounded"
-        >
-          {uniqueModalities.map(modality => (
-            <option key={modality} value={modality}>
-              {modality === 'all' ? 'Todas las modalidades' : modality}
-            </option>
-          ))}
-        </select>
-
-        <select
-          value={filters.price}
-          onChange={(e) => setFilters({ ...filters, price: e.target.value })}
-          className="p-2 border rounded"
-        >
-          {uniquePrices.map(price => (
-            <option key={price} value={price}>
-              {price === 'all' ? 'Todos los precios' : price}
-            </option>
-          ))}
-        </select>
-
-        <select
-          value={filters.rating}
-          onChange={(e) => setFilters({ ...filters, rating: e.target.value })}
-          className="p-2 border rounded"
-        >
-          {uniqueRatings.map(rating => (
-            <option key={rating} value={rating}>
-              {rating === 'all' ? 'Todas las calificaciones' : rating}
-            </option>
-          ))}
-        </select>
+        {isOrganizer && (
+          <Link
+            href="/dashboard/competitions/new"
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          >
+            Crear Competencia
+          </Link>
+        )}
       </div>
 
       <div className="h-[calc(100vh-4rem)]">
@@ -227,14 +200,6 @@ export default function CompetitionsPage() {
             <div className="mb-6">
               <div className="flex items-center justify-between mb-4">
                 <h1 className="text-2xl font-bold text-white">Rimappa</h1>
-                {isOrganizer && (
-                  <Link
-                    href="/dashboard/competitions/new"
-                    className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-full text-sm transition-colors"
-                  >
-                    + Nueva
-                  </Link>
-                )}
               </div>
               <div className="relative">
                 <input
@@ -250,105 +215,90 @@ export default function CompetitionsPage() {
 
             {/* Filtros */}
             <div className="mb-6 space-y-4">
-              <div className="flex justify-between items-center">
-                <h2 className="text-lg font-medium text-white">Filtros</h2>
-                {showFilters && (
-                  <button
-                    onClick={() => setShowFilters(false)}
-                    className="text-gray-400 hover:text-white"
-                  >
-                    <XMarkIcon className="h-5 w-5" />
-                  </button>
-                )}
+              <div>
+                <label className="text-sm text-gray-400 block mb-2">Fecha</label>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { value: 'all', label: 'Todas' },
+                    { value: 'today', label: 'Hoy' },
+                    { value: 'week', label: 'Esta semana' },
+                    { value: 'month', label: 'Este mes' }
+                  ].map((filter) => (
+                    <button
+                      key={filter.value}
+                      onClick={() => setDateFilter(filter.value as any)}
+                      className={`px-3 py-1 rounded-full text-sm ${
+                        dateFilter === filter.value
+                          ? 'bg-purple-600 text-white'
+                          : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                      }`}
+                    >
+                      {filter.label}
+                    </button>
+                  ))}
+                </div>
               </div>
 
-              {/* Chips de filtros */}
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm text-gray-400 block mb-2">Fecha</label>
-                  <div className="flex flex-wrap gap-2">
-                    {['all', 'today', 'week', 'month'].map((filter) => (
-                      <button
-                        key={filter}
-                        onClick={() => setDateFilter(filter as any)}
-                        className={`px-3 py-1 rounded-full text-sm ${
-                          dateFilter === filter
-                            ? 'bg-purple-600 text-white'
-                            : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                        }`}
-                      >
-                        {filter === 'all' ? 'Todas' :
-                         filter === 'today' ? 'Hoy' :
-                         filter === 'week' ? 'Esta semana' : 'Este mes'}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <label className="text-sm text-gray-400 block mb-2">Tipo</label>
-                  <div className="flex flex-wrap gap-2">
+              <div>
+                <label className="text-sm text-gray-400 block mb-2">Tipo</label>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { value: 'all', label: 'Todos' },
+                    { value: 'microphone', label: 'Micrófono' },
+                    { value: 'beatbox', label: 'BeatBox' }
+                  ].map((type) => (
                     <button
-                      onClick={() => setTypeFilter('microphone')}
+                      key={type.value}
+                      onClick={() => setTypeFilter(type.value as any)}
                       className={`px-3 py-1 rounded-full text-sm ${
-                        typeFilter === 'microphone'
+                        typeFilter === type.value
                           ? 'bg-purple-600 text-white'
                           : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                       }`}
                     >
-                      Micrófono
+                      {type.label}
                     </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="text-sm text-gray-400 block mb-2">Ordenar por</label>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { value: 'distance', label: 'Cercanía' },
+                    { value: 'popularity', label: 'Más popular' },
+                    { value: 'date', label: 'Fecha' },
+                    { value: 'name', label: 'Nombre' }
+                  ].map((option) => (
                     <button
-                      onClick={() => setTypeFilter('beatbox')}
+                      key={option.value}
+                      onClick={() => setSortBy(option.value as any)}
                       className={`px-3 py-1 rounded-full text-sm ${
-                        typeFilter === 'beatbox'
+                        sortBy === option.value
                           ? 'bg-purple-600 text-white'
                           : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                       }`}
                     >
-                      BeatBox
+                      {option.label}
                     </button>
-                  </div>
+                  ))}
                 </div>
+              </div>
 
-                <div>
-                  <label className="text-sm text-gray-400 block mb-2">Ordenar por</label>
-                  <div className="flex flex-wrap gap-2">
-                    {[
-                      { value: 'distance', label: 'Cercanía' },
-                      { value: 'popularity', label: 'Más popular' },
-                      { value: 'date', label: 'Fecha' },
-                      { value: 'name', label: 'Nombre' }
-                    ].map((option) => (
-                      <button
-                        key={option.value}
-                        onClick={() => setSortBy(option.value as any)}
-                        className={`px-3 py-1 rounded-full text-sm ${
-                          sortBy === option.value
-                            ? 'bg-purple-600 text-white'
-                            : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                        }`}
-                      >
-                        {option.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <label className="text-sm text-gray-400 block mb-2">Radio de búsqueda</label>
-                  <input
-                    type="range"
-                    min="500"
-                    max="5000"
-                    step="500"
-                    value={searchRadius}
-                    onChange={(e) => setSearchRadius(Number(e.target.value))}
-                    className="w-full accent-purple-600"
-                  />
-                  <div className="text-sm text-gray-400 mt-1">
-                    {(searchRadius / 1000).toFixed(1)} km
-                  </div>
+              <div>
+                <label className="text-sm text-gray-400 block mb-2">Radio de búsqueda</label>
+                <input
+                  type="range"
+                  min="500"
+                  max="5000"
+                  step="500"
+                  value={searchRadius}
+                  onChange={(e) => setSearchRadius(Number(e.target.value))}
+                  className="w-full accent-purple-600"
+                />
+                <div className="text-sm text-gray-400 mt-1">
+                  {(searchRadius / 1000).toFixed(1)} km
                 </div>
               </div>
             </div>
@@ -365,7 +315,7 @@ export default function CompetitionsPage() {
                       ...viewport,
                       latitude: competition.coordinates[1],
                       longitude: competition.coordinates[0],
-                      zoom: 12
+                      zoom: 14
                     });
                   }}
                 >
@@ -378,7 +328,7 @@ export default function CompetitionsPage() {
                   <div className="mt-2 flex items-center space-x-4">
                     <div className="flex items-center text-sm text-gray-400">
                       <CalendarIcon className="h-4 w-4 mr-1" />
-                      {format(competition.date, "d MMM", { locale: es })}
+                      {format(new Date(competition.date), "d MMM", { locale: es })}
                     </div>
                     <div className="flex items-center text-sm text-gray-400">
                       <MapPinIcon className="h-4 w-4 mr-1" />
@@ -417,11 +367,17 @@ export default function CompetitionsPage() {
               <div className="text-white">Cargando mapa...</div>
             </div>}>
               <Map
-                longitude={-58.3815}
-                latitude={-34.6037}
-                zoom={12}
+                longitude={viewport.longitude}
+                latitude={viewport.latitude}
+                zoom={viewport.zoom}
                 style={{ width: '100%', height: '100%' }}
                 mapStyle={`https://api.maptiler.com/maps/streets/style.json?key=${process.env.NEXT_PUBLIC_MAPTILER_KEY}`}
+                dragRotate={false}
+                onMove={evt => setViewport(evt.viewState)}
+                onClick={evt => {
+                  // Cerrar el popup si se hace click en el mapa
+                  setSelectedCompetition(null);
+                }}
               >
                 <NavigationControl />
                 {filteredCompetitions.map((competition) => (
@@ -429,23 +385,36 @@ export default function CompetitionsPage() {
                     key={competition.id}
                     longitude={competition.coordinates[0]}
                     latitude={competition.coordinates[1]}
+                    onClick={e => {
+                      e.originalEvent.stopPropagation();
+                      setSelectedCompetition(competition);
+                    }}
                   >
-                    <Popup
-                      longitude={competition.coordinates[0]}
-                      latitude={competition.coordinates[1]}
-                      closeButton={true}
-                      closeOnClick={false}
-                    >
-                      <div className="p-2">
-                        <h3 className="font-bold">{competition.title}</h3>
-                        <p>{competition.description}</p>
-                        <p className="text-sm text-gray-500">
-                          {format(new Date(competition.date), 'PPP', { locale: es })}
-                        </p>
+                    <div className="cursor-pointer">
+                      <div className="w-6 h-6 bg-purple-600 rounded-full flex items-center justify-center text-white text-xs">
+                        {competition.currentParticipants}
                       </div>
-                    </Popup>
+                    </div>
                   </Marker>
                 ))}
+                {selectedCompetition && (
+                  <Popup
+                    longitude={selectedCompetition.coordinates[0]}
+                    latitude={selectedCompetition.coordinates[1]}
+                    closeButton={true}
+                    closeOnClick={false}
+                    onClose={() => setSelectedCompetition(null)}
+                    anchor="bottom"
+                  >
+                    <div className="p-2">
+                      <h3 className="font-bold">{selectedCompetition.title}</h3>
+                      <p>{selectedCompetition.description}</p>
+                      <p className="text-sm text-gray-500">
+                        {format(new Date(selectedCompetition.date), 'PPP', { locale: es })}
+                      </p>
+                    </div>
+                  </Popup>
+                )}
               </Map>
             </Suspense>
           </div>
