@@ -2,8 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { processCompetitions } from '@/scripts/competitions';
-import { UserRole } from '@prisma/client';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, UserRole } from '@prisma/client';
 import { parse } from 'csv-parse/sync';
 
 const prisma = new PrismaClient();
