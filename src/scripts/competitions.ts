@@ -152,7 +152,7 @@ export async function readCompetitionsFromCSV(): Promise<CompetitionCSV[]> {
         console.error('Error validating competition:', record, error);
         return null;
       }
-    }).filter((record): record is CompetitionCSV => record !== null);
+    }).filter((record: CompetitionCSV | null): record is CompetitionCSV => record !== null);
   } catch (error) {
     console.error('Error reading competitions from CSV:', error);
     return [];
