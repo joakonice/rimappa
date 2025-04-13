@@ -408,21 +408,18 @@ export default function CompetitionsPage() {
               <div className="text-white">Cargando mapa...</div>
             </div>}>
               <div className="flex flex-col gap-4">
-                <div className="h-[400px] w-full">
+                <div className="h-[400px] w-full relative">
                   <Map
                     mapStyle={`https://api.maptiler.com/maps/streets/style.json?key=${process.env.NEXT_PUBLIC_MAPTILER_API_KEY}`}
-                    longitude={viewport.longitude}
-                    latitude={viewport.latitude}
-                    zoom={viewport.zoom}
-                    style={{ width: '100%', height: '100%' }}
-                    dragRotate={false}
-                    onMove={evt => setViewport(evt.viewState)}
-                    onClick={evt => {
-                      // Cerrar el popup si se hace click en el mapa
-                      setSelectedCompetition(null);
+                    initialViewState={{
+                      longitude: viewport.longitude,
+                      latitude: viewport.latitude,
+                      zoom: viewport.zoom
                     }}
+                    onMove={evt => setViewport(evt.viewState)}
+                    style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0 }}
                   >
-                    <NavigationControl />
+                    <NavigationControl position="top-right" />
                     {sortedCompetitions.map((competition) => (
                       <Marker
                         key={competition.id}
@@ -433,20 +430,8 @@ export default function CompetitionsPage() {
                           setSelectedCompetition(competition);
                         }}
                       >
-                        <div className="cursor-pointer">
-                          {competition.image ? (
-                            <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-purple-600">
-                              <img
-                                src={competition.image}
-                                alt={competition.title}
-                                className="w-full h-full object-cover"
-                              />
-                            </div>
-                          ) : (
-                            <div className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center text-white text-xs">
-                              {competition.currentParticipants}
-                            </div>
-                          )}
+                        <div className="bg-purple-600 text-white rounded-full w-6 h-6 flex items-center justify-center cursor-pointer">
+                          {competition.currentParticipants}
                         </div>
                       </Marker>
                     ))}
@@ -454,16 +439,14 @@ export default function CompetitionsPage() {
                       <Popup
                         longitude={selectedCompetition.coordinates[0]}
                         latitude={selectedCompetition.coordinates[1]}
-                        closeButton={true}
-                        closeOnClick={false}
-                        onClose={() => setSelectedCompetition(null)}
                         anchor="bottom"
+                        onClose={() => setSelectedCompetition(null)}
                       >
                         <div className="p-2">
                           <h3 className="font-bold">{selectedCompetition.title}</h3>
-                          <p>{selectedCompetition.description}</p>
-                          <p className="text-sm text-gray-500">
-                            {format(new Date(selectedCompetition.date), 'PPP', { locale: es })}
+                          <p className="text-sm">{selectedCompetition.location}</p>
+                          <p className="text-sm">
+                            {format(new Date(selectedCompetition.date), "d 'de' MMMM, yyyy", { locale: es })}
                           </p>
                         </div>
                       </Popup>
