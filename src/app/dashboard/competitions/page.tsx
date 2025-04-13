@@ -219,8 +219,8 @@ export default function CompetitionsPage() {
         )}
       </div>
 
-      <div className="h-[calc(100vh-4rem)]">
-        <div className="flex h-full">
+      <div className="h-screen">
+        <div className="flex h-[calc(100vh-8rem)]">
           {/* Panel lateral */}
           <div className="w-96 bg-gray-800 p-4 overflow-y-auto relative">
             {/* Header con búsqueda */}
@@ -407,52 +407,50 @@ export default function CompetitionsPage() {
             <Suspense fallback={<div className="w-full h-full flex items-center justify-center bg-gray-900">
               <div className="text-white">Cargando mapa...</div>
             </div>}>
-              <div className="flex flex-col gap-4">
-                <div className="h-[400px] w-full relative">
-                  <Map
-                    mapStyle={`https://api.maptiler.com/maps/streets/style.json?key=${process.env.NEXT_PUBLIC_MAPTILER_API_KEY}`}
-                    initialViewState={{
-                      longitude: viewport.longitude,
-                      latitude: viewport.latitude,
-                      zoom: viewport.zoom
-                    }}
-                    onMove={evt => setViewport(evt.viewState)}
-                    style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0 }}
-                  >
-                    <NavigationControl position="top-right" />
-                    {sortedCompetitions.map((competition) => (
-                      <Marker
-                        key={competition.id}
-                        longitude={competition.coordinates[0]}
-                        latitude={competition.coordinates[1]}
-                        onClick={e => {
-                          e.originalEvent.stopPropagation();
-                          setSelectedCompetition(competition);
-                        }}
-                      >
-                        <div className="bg-purple-600 text-white rounded-full w-6 h-6 flex items-center justify-center cursor-pointer">
-                          {competition.currentParticipants}
-                        </div>
-                      </Marker>
-                    ))}
-                    {selectedCompetition && (
-                      <Popup
-                        longitude={selectedCompetition.coordinates[0]}
-                        latitude={selectedCompetition.coordinates[1]}
-                        anchor="bottom"
-                        onClose={() => setSelectedCompetition(null)}
-                      >
-                        <div className="p-2">
-                          <h3 className="font-bold">{selectedCompetition.title}</h3>
-                          <p className="text-sm">{selectedCompetition.location}</p>
-                          <p className="text-sm">
-                            {format(new Date(selectedCompetition.date), "d 'de' MMMM, yyyy", { locale: es })}
-                          </p>
-                        </div>
-                      </Popup>
-                    )}
-                  </Map>
-                </div>
+              <div className="h-full w-full">
+                <Map
+                  mapStyle={`https://api.maptiler.com/maps/streets/style.json?key=${process.env.NEXT_PUBLIC_MAPTILER_API_KEY}`}
+                  initialViewState={{
+                    longitude: viewport.longitude,
+                    latitude: viewport.latitude,
+                    zoom: viewport.zoom
+                  }}
+                  onMove={evt => setViewport(evt.viewState)}
+                  style={{ width: '100%', height: '100%' }}
+                >
+                  <NavigationControl position="top-right" />
+                  {sortedCompetitions.map((competition) => (
+                    <Marker
+                      key={competition.id}
+                      longitude={competition.coordinates[0]}
+                      latitude={competition.coordinates[1]}
+                      onClick={e => {
+                        e.originalEvent.stopPropagation();
+                        setSelectedCompetition(competition);
+                      }}
+                    >
+                      <div className="bg-purple-600 text-white rounded-full w-6 h-6 flex items-center justify-center cursor-pointer">
+                        {competition.currentParticipants}
+                      </div>
+                    </Marker>
+                  ))}
+                  {selectedCompetition && (
+                    <Popup
+                      longitude={selectedCompetition.coordinates[0]}
+                      latitude={selectedCompetition.coordinates[1]}
+                      anchor="bottom"
+                      onClose={() => setSelectedCompetition(null)}
+                    >
+                      <div className="p-2">
+                        <h3 className="font-bold">{selectedCompetition.title}</h3>
+                        <p className="text-sm">{selectedCompetition.location}</p>
+                        <p className="text-sm">
+                          {format(new Date(selectedCompetition.date), "d 'de' MMMM, yyyy", { locale: es })}
+                        </p>
+                      </div>
+                    </Popup>
+                  )}
+                </Map>
               </div>
             </Suspense>
           </div>
