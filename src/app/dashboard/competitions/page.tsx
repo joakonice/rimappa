@@ -182,6 +182,13 @@ export default function CompetitionsPage() {
       }
     }
 
+    // Filtro por radio de búsqueda (solo si está activado)
+    if (useSearchRadius) {
+      // Por ahora retornamos true ya que necesitaríamos la ubicación del usuario
+      // para calcular la distancia real
+      console.log('Radio de búsqueda activado pero no implementado');
+    }
+
     console.log('Competencia aceptada:', competition.title);
     return true;
   }).sort((a, b) => {
@@ -205,8 +212,8 @@ export default function CompetitionsPage() {
   useEffect(() => {
     console.log('Competitions:', competitions);
     console.log('Filtered Competitions:', filteredCompetitions);
-    console.log('Current filters:', { dateFilter, typeFilter, sortBy, searchRadius, searchQuery });
-  }, [competitions, filteredCompetitions, dateFilter, typeFilter, sortBy, searchRadius, searchQuery]);
+    console.log('Current filters:', { dateFilter, typeFilter, sortBy, useSearchRadius, searchRadius, searchQuery });
+  }, [competitions, filteredCompetitions, dateFilter, typeFilter, sortBy, useSearchRadius, searchRadius, searchQuery]);
 
   return (
     <div className="container mx-auto px-4 py-8">
