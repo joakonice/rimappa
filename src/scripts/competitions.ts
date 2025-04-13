@@ -1,5 +1,8 @@
 import { stringify } from 'csv-stringify/sync';
+import { parse } from 'csv-parse/sync';
 import { Competition, CompetitionStatus, PrismaClient } from '@prisma/client';
+import fs from 'fs';
+import path from 'path';
 
 const prisma = new PrismaClient({
   log: ['query'],
@@ -125,5 +128,36 @@ export async function processCompetitions(competitionsData: any[]) {
     console.error('Error processing competitions:', error);
   } finally {
     await prisma.$disconnect();
+  }
+}
+
+export async function readCompetitionsFromCSV(): Promise<CompetitionCSV[]> {
+  try {
+    const csvPath = path.join(process.cwd(), 'data', 'competitions.csv');
+    const fileContent = fs.readFileSync(csvPath, 'utf-8');
+    const records = parse(fileContent, {
+      columns: true,
+      skip_empty_lines: true
+    });
+    
+    return records.map((record: any) => ({
+      ...record,
+      maxParticipants: parseInt(record.maxParticipants),
+      rating: record.rating ? parseFloat(record.rating) : undefined
+    }));
+  } catch (error) {
+    console.error('Error reading competitions from CSV:', error);
+    return [];
+  }
+}
+
+export async function writeCompetitionsToCSV(competitions: CompetitionCSV[]) {
+  try {
+    const csvPath = path.join(process.cwd(), 'data', 'competitions.csv');
+    const csvContent = stringify(competitions, { header: true });
+    fs.writeFileSync(csvPath, csvContent);
+    console.log('Competitions written to CSV successfully');
+  } catch (error) {
+    console.error('Error writing competitions to CSV:', error);
   }
 }

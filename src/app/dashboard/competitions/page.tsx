@@ -92,12 +92,12 @@ export default function CompetitionsPage() {
   const isOrganizer = session?.user?.role === 'ORGANIZER';
   
   // Estados principales
-  const [competitions, setCompetitions] = useState<Competition[]>(MOCK_COMPETITIONS);
+  const [competitions, setCompetitions] = useState<Competition[]>([]);
   const [selectedCompetition, setSelectedCompetition] = useState<Competition | null>(null);
   
   // Estados para filtros
   const [dateFilter, setDateFilter] = useState<'all' | 'today' | 'week' | 'month'>('all');
-  const [typeFilter, setTypeFilter] = useState<'all' | 'freestyle' | 'underground' | 'dinastiafreestyle'>('all');
+  const [typeFilter, setTypeFilter] = useState<'all' | 'freestyle' | 'underground'>('all');
   const [sortBy, setSortBy] = useState<'distance' | 'popularity' | 'date' | 'name'>('date');
   const [searchQuery, setSearchQuery] = useState('');
   const [useSearchRadius, setUseSearchRadius] = useState(false);
@@ -118,12 +118,11 @@ export default function CompetitionsPage() {
           throw new Error('Error al cargar las competencias');
         }
         const data = await response.json();
-        if (data && data.length > 0) {
-          setCompetitions(data);
-        }
+        console.log('Datos cargados de la API:', data);
+        setCompetitions(data || MOCK_COMPETITIONS);
       } catch (error) {
-        console.log('Error al cargar competencias de la API:', error);
-        // Mantenemos los datos mock si hay un error
+        console.error('Error al cargar competencias de la API:', error);
+        setCompetitions(MOCK_COMPETITIONS);
       }
     };
 

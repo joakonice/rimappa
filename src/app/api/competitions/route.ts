@@ -4,6 +4,8 @@ import { PrismaClient } from '@prisma/client';
 import { z } from 'zod';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { readCompetitionsFromCSV } from '@/scripts/competitions';
+import { getCoordinates } from '@/lib/geocoding';
 
 const competitionSchema = z.object({
   title: z.string().min(3),
@@ -60,29 +62,24 @@ export async function POST(request: Request) {
 
 export async function GET() {
   try {
-    const competitions = await prisma.competition.findMany({
-      include: {
-        organizer: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-      },
-    });
+    const competitions = await readCompetitionsFromCSV();
+    
+    // Transform the data to include coordinates
+    const competitionsWithCoordinates = await Promise.all(
+      competitions.map(async (competition) => {
+        const coordinates = await getCoordinates(competition.location);
+        return {
+          ...competition,
+          id: competition.title.toLowerCase().replace(/\s+/g, '-'),
+          coordinates: coordinates ? [coordinates.longitude, coordinates.latitude] : [-58.3815, -34.6037], // Default to CABA
+          currentParticipants: 0, // This should be fetched from a separate source tracking participants
+        };
+      })
+    );
 
-    // Serialize dates to ISO string format
-    const serializedCompetitions = competitions.map(comp => ({
-      ...comp,
-      date: comp.date.toISOString(),
-    }));
-
-    return NextResponse.json(serializedCompetitions);
+    return NextResponse.json(competitionsWithCoordinates);
   } catch (error) {
     console.error('Error fetching competitions:', error);
-    return NextResponse.json(
-      { error: 'Error fetching competitions' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to fetch competitions' }, { status: 500 });
   }
 } 
